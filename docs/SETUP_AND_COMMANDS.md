@@ -66,6 +66,20 @@ Output:
 drafts/comparison_requests/
 ```
 
+## Promote completed draft comparison
+
+After completing every `needs_completion` field in a draft:
+
+```bash
+python tools/promote_draft.py drafts/comparison_requests/example.json
+```
+
+The tool writes a validated record into:
+
+```text
+data/comparisons/
+```
+
 ## Validate comparison JSON files
 
 From repo root:

@@ -26,6 +26,7 @@ from issue_request_ingest import (  # noqa: E402
     parse_issue_form_body,
     slugify,
 )
+from promote_draft import find_placeholders, promoted_comparison  # noqa: E402
 from script_generator import generate_short_script  # noqa: E402
 from signal_rollup import SignalRow, build_rollup, render_rollup, score_signal  # noqa: E402
 from topic_scorer import TopicScoreInput, score_topic  # noqa: E402
@@ -279,6 +280,31 @@ medium
     def test_slugify_rejects_empty_values(self) -> None:
         with self.assertRaises(ValueError):
             slugify("!!!")
+
+
+class DraftPromotionTests(unittest.TestCase):
+    def test_find_placeholders_reports_nested_paths(self) -> None:
+        draft = {
+            "a_root": "needs_completion",
+            "request_source": {"issue_title": "needs_completion"},
+        }
+
+        placeholders = find_placeholders(draft)
+
+        self.assertIn("a_root", placeholders)
+        self.assertIn("request_source.issue_title", placeholders)
+        self.assertEqual(len(placeholders), 2)
+
+    def test_promoted_comparison_removes_request_source_and_validates_status(self) -> None:
+        draft = {**VALID_COMPARISON, "pipeline_status": "drafted"}
+        draft["request_source"] = {"issue_number": 42}
+
+        promoted = promoted_comparison(draft)
+        result = validate_comparison(promoted)
+
+        self.assertNotIn("request_source", promoted)
+        self.assertEqual(promoted["pipeline_status"], "validated")
+        self.assertEqual(result["status"], "valid")
 
 
 if __name__ == "__main__":

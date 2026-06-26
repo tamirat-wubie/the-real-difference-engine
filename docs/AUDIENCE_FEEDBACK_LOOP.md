@@ -26,6 +26,14 @@ Draft output:
 drafts/comparison_requests/
 ```
 
+After completing every `needs_completion` field, promote a draft into the validated comparison library:
+
+```bash
+python tools/promote_draft.py drafts/comparison_requests/example.json
+```
+
+Promotion blocks unfinished placeholders, validation failures, and duplicate comparison IDs.
+
 ## Signal Types
 
 Supported `signal_type` values:
