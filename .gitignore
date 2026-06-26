@@ -1,0 +1,23 @@
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.env
+
+# Generated outputs
+generated/
+dist/
+build/
+
+# OS/editor
+.DS_Store
+.idea/
+.vscode/
+
+# Secrets and private exports
+*.key
+*.pem
+secrets/
+private/
+.env*

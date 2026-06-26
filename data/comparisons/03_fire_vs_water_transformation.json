@@ -1,0 +1,29 @@
+{
+  "comparison_id": "fire_vs_water_transformation",
+  "title": "Fire vs Water",
+  "a": "Fire",
+  "b": "Water",
+  "primary_lens": "Transformation",
+  "secondary_lens": "Intensity vs persistence",
+  "context": "Nature, symbolism, change, persistence, and force",
+  "surface_question": "Which is more powerful, fire or water?",
+  "a_root": "Rapid physical transformation through energy release.",
+  "b_root": "Adaptive molecular flow that carries, dissolves, nourishes, erodes, and reshapes.",
+  "a_causal_chain": "fuel + oxygen + heat -> combustion -> energy release -> rapid transformation -> extinction without fuel",
+  "b_causal_chain": "cohesion + gravity + pressure -> flow -> carrying/dissolving/erosion -> slow transformation",
+  "hidden_similarity": "Both transform the world.",
+  "hidden_difference": "Fire transforms by intensity. Water transforms by persistence.",
+  "a_failure_mode": "Fire fails without fuel, oxygen, heat, or containment.",
+  "b_failure_mode": "Water loses directed force without boundary, gradient, pressure, or time.",
+  "conditional_verdict": "Fire wins when fast transformation is needed. Water wins when deep persistent transformation is needed.",
+  "final_line": "Fire transforms by intensity. Water transforms by persistence.",
+  "risk_level": "low",
+  "evidence_tier": "conceptual_nature_reasoning",
+  "content_formats": [
+    "short_video",
+    "long_video",
+    "newsletter",
+    "playbook_example",
+    "software_object"
+  ]
+}

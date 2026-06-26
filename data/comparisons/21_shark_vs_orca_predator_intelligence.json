@@ -1,0 +1,29 @@
+{
+  "comparison_id": "shark_vs_orca_predator_intelligence",
+  "title": "Shark vs Orca",
+  "a": "Shark",
+  "b": "Orca",
+  "primary_lens": "Predator intelligence",
+  "secondary_lens": "",
+  "context": "Content, education, decision-making, and platform development",
+  "surface_question": "What is the real difference between Shark and Orca?",
+  "a_root": "A distinct mechanism in the comparison.",
+  "b_root": "A contrasting mechanism in the comparison.",
+  "a_causal_chain": "origin -> driver -> behavior -> result",
+  "b_causal_chain": "origin -> driver -> behavior -> result",
+  "hidden_similarity": "Both belong to the comparison context.",
+  "hidden_difference": "The shark is a weapon  The orca is a strategy.",
+  "a_failure_mode": "A fails when its mechanism loses fit, trust, context, or execution.",
+  "b_failure_mode": "B fails when its mechanism loses fit, trust, context, or execution.",
+  "conditional_verdict": "Use Shark when its conditions fit. Use Orca when its conditions fit.",
+  "final_line": "The shark is a weapon. The orca is a strategy.",
+  "risk_level": "low",
+  "evidence_tier": "conceptual_reasoning",
+  "content_formats": [
+    "short_video",
+    "long_video",
+    "newsletter",
+    "playbook_example",
+    "software_object"
+  ]
+}

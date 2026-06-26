@@ -1,0 +1,29 @@
+{
+  "comparison_id": "discipline_vs_motivation_behavior_continuity",
+  "title": "Discipline vs Motivation",
+  "a": "Discipline",
+  "b": "Motivation",
+  "primary_lens": "Behavior continuity",
+  "secondary_lens": "Emotional stability",
+  "context": "Human behavior, habit-building, creator consistency, and long-term goal execution",
+  "surface_question": "Which is better, discipline or motivation?",
+  "a_root": "Rule-governed continuity of action.",
+  "b_root": "Emotion-triggered energy toward action.",
+  "a_causal_chain": "rule -> repetition -> habit -> identity -> compounding",
+  "b_causal_chain": "feeling -> energy -> action -> emotional decay -> inconsistency risk",
+  "hidden_similarity": "Both support action.",
+  "hidden_difference": "Motivation depends on emotional weather. Discipline survives emotional change.",
+  "a_failure_mode": "Discipline fails when it becomes rigid, meaningless, punitive, or unsustainable.",
+  "b_failure_mode": "Motivation fails when excitement, fear, urgency, or inspiration fades.",
+  "conditional_verdict": "Use motivation to start. Use discipline to continue.",
+  "final_line": "Motivation starts motion. Discipline preserves motion.",
+  "risk_level": "low",
+  "evidence_tier": "conceptual_behavior_reasoning",
+  "content_formats": [
+    "short_video",
+    "long_video",
+    "newsletter",
+    "playbook_example",
+    "software_object"
+  ]
+}

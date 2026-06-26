@@ -1,0 +1,29 @@
+{
+  "comparison_id": "ocean_vs_desert_survival_environment",
+  "title": "Ocean vs Desert",
+  "a": "Ocean",
+  "b": "Desert",
+  "primary_lens": "Survival environment",
+  "secondary_lens": "",
+  "context": "Content, education, decision-making, and platform development",
+  "surface_question": "What is the real difference between Ocean and Desert?",
+  "a_root": "A distinct mechanism in the comparison.",
+  "b_root": "A contrasting mechanism in the comparison.",
+  "a_causal_chain": "origin -> driver -> behavior -> result",
+  "b_causal_chain": "origin -> driver -> behavior -> result",
+  "hidden_similarity": "Both belong to the comparison context.",
+  "hidden_difference": "The ocean overwhelms by abundance  The desert overwhelms by absence.",
+  "a_failure_mode": "A fails when its mechanism loses fit, trust, context, or execution.",
+  "b_failure_mode": "B fails when its mechanism loses fit, trust, context, or execution.",
+  "conditional_verdict": "Use Ocean when its conditions fit. Use Desert when its conditions fit.",
+  "final_line": "The ocean overwhelms by abundance. The desert overwhelms by absence.",
+  "risk_level": "low",
+  "evidence_tier": "conceptual_reasoning",
+  "content_formats": [
+    "short_video",
+    "long_video",
+    "newsletter",
+    "playbook_example",
+    "software_object"
+  ]
+}

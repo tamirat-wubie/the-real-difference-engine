@@ -1,0 +1,29 @@
+{
+  "comparison_id": "search_engine_vs_chatbot_information_access",
+  "title": "Search Engine vs Chatbot",
+  "a": "Search Engine",
+  "b": "Chatbot",
+  "primary_lens": "Information access",
+  "secondary_lens": "",
+  "context": "Content, education, decision-making, and platform development",
+  "surface_question": "What is the real difference between Search Engine and Chatbot?",
+  "a_root": "A distinct mechanism in the comparison.",
+  "b_root": "A contrasting mechanism in the comparison.",
+  "a_causal_chain": "origin -> driver -> behavior -> result",
+  "b_causal_chain": "origin -> driver -> behavior -> result",
+  "hidden_similarity": "Both belong to the comparison context.",
+  "hidden_difference": "Search retrieves information  Chatbots synthesize responses.",
+  "a_failure_mode": "A fails when its mechanism loses fit, trust, context, or execution.",
+  "b_failure_mode": "B fails when its mechanism loses fit, trust, context, or execution.",
+  "conditional_verdict": "Use Search Engine when its conditions fit. Use Chatbot when its conditions fit.",
+  "final_line": "Search retrieves information. Chatbots synthesize responses.",
+  "risk_level": "low",
+  "evidence_tier": "conceptual_reasoning",
+  "content_formats": [
+    "short_video",
+    "long_video",
+    "newsletter",
+    "playbook_example",
+    "software_object"
+  ]
+}

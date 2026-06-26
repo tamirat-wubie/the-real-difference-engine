@@ -1,0 +1,29 @@
+{
+  "comparison_id": "intelligence_vs_wisdom_decision_quality",
+  "title": "Intelligence vs Wisdom",
+  "a": "Intelligence",
+  "b": "Wisdom",
+  "primary_lens": "Decision quality",
+  "secondary_lens": "Consequence awareness",
+  "context": "Human judgment, learning, leadership, and decision-making",
+  "surface_question": "Which is more important, intelligence or wisdom?",
+  "a_root": "Capacity to process, connect, solve, and model information.",
+  "b_root": "Capacity to judge consequences in context.",
+  "a_causal_chain": "information -> analysis -> pattern recognition -> solution generation -> expanded possibility",
+  "b_causal_chain": "experience -> context -> restraint -> consequence mapping -> right action",
+  "hidden_similarity": "Both guide decisions.",
+  "hidden_difference": "Intelligence expands possibilities. Wisdom filters consequences.",
+  "a_failure_mode": "Intelligence fails when it accelerates bad goals or ignores consequences.",
+  "b_failure_mode": "Wisdom fails when it becomes overly cautious, outdated, or disconnected from new information.",
+  "conditional_verdict": "Intelligence is strongest for solving. Wisdom is strongest for choosing.",
+  "final_line": "Intelligence finds possibilities. Wisdom chooses consequences.",
+  "risk_level": "low",
+  "evidence_tier": "conceptual_decision_reasoning",
+  "content_formats": [
+    "short_video",
+    "long_video",
+    "newsletter",
+    "playbook_example",
+    "software_object"
+  ]
+}

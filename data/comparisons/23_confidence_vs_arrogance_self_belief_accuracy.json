@@ -1,0 +1,29 @@
+{
+  "comparison_id": "confidence_vs_arrogance_self_belief_accuracy",
+  "title": "Confidence vs Arrogance",
+  "a": "Confidence",
+  "b": "Arrogance",
+  "primary_lens": "Self-belief accuracy",
+  "secondary_lens": "",
+  "context": "Content, education, decision-making, and platform development",
+  "surface_question": "What is the real difference between Confidence and Arrogance?",
+  "a_root": "A distinct mechanism in the comparison.",
+  "b_root": "A contrasting mechanism in the comparison.",
+  "a_causal_chain": "origin -> driver -> behavior -> result",
+  "b_causal_chain": "origin -> driver -> behavior -> result",
+  "hidden_similarity": "Both belong to the comparison context.",
+  "hidden_difference": "Confidence trusts ability  Arrogance defends image.",
+  "a_failure_mode": "A fails when its mechanism loses fit, trust, context, or execution.",
+  "b_failure_mode": "B fails when its mechanism loses fit, trust, context, or execution.",
+  "conditional_verdict": "Use Confidence when its conditions fit. Use Arrogance when its conditions fit.",
+  "final_line": "Confidence trusts ability. Arrogance defends image.",
+  "risk_level": "low",
+  "evidence_tier": "conceptual_reasoning",
+  "content_formats": [
+    "short_video",
+    "long_video",
+    "newsletter",
+    "playbook_example",
+    "software_object"
+  ]
+}

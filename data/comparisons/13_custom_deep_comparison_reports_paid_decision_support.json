@@ -1,0 +1,29 @@
+{
+  "comparison_id": "custom_deep_comparison_reports_paid_decision_support",
+  "title": "Custom Deep Comparison Reports",
+  "a": "Custom Deep Comparison Reports",
+  "b": "Method",
+  "primary_lens": "Paid decision support",
+  "secondary_lens": "",
+  "context": "Content, education, decision-making, and platform development",
+  "surface_question": "What is the real difference between Custom Deep Comparison Reports and Method?",
+  "a_root": "A distinct mechanism in the comparison.",
+  "b_root": "A contrasting mechanism in the comparison.",
+  "a_causal_chain": "origin -> driver -> behavior -> result",
+  "b_causal_chain": "origin -> driver -> behavior -> result",
+  "hidden_similarity": "Both belong to the comparison context.",
+  "hidden_difference": "A good comparison does not pick blindly  It reveals conditions.",
+  "a_failure_mode": "A fails when its mechanism loses fit, trust, context, or execution.",
+  "b_failure_mode": "B fails when its mechanism loses fit, trust, context, or execution.",
+  "conditional_verdict": "Use Custom Deep Comparison Reports when its conditions fit. Use Method when its conditions fit.",
+  "final_line": "A good comparison does not pick blindly. It reveals conditions.",
+  "risk_level": "low",
+  "evidence_tier": "conceptual_reasoning",
+  "content_formats": [
+    "short_video",
+    "long_video",
+    "newsletter",
+    "playbook_example",
+    "software_object"
+  ]
+}

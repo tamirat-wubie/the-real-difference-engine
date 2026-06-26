@@ -1,0 +1,29 @@
+{
+  "comparison_id": "youtube_vs_tiktok_attention_infrastructure",
+  "title": "YouTube vs TikTok",
+  "a": "YouTube",
+  "b": "TikTok",
+  "primary_lens": "Attention infrastructure",
+  "secondary_lens": "Creator durability",
+  "context": "Creator economy, content distribution, platform strategy, and audience building",
+  "surface_question": "Which platform is better for creators?",
+  "a_root": "A searchable, durable video library with long-form depth and recommendation systems.",
+  "b_root": "An algorithmic discovery engine optimized for rapid attention bursts.",
+  "a_causal_chain": "search + recommendation -> longer content -> library building -> subscriber trust -> durable attention",
+  "b_causal_chain": "For You feed -> fast hook -> rapid distribution -> trend participation -> attention spike",
+  "hidden_similarity": "Both distribute attention.",
+  "hidden_difference": "TikTok accelerates discovery. YouTube stores durable attention.",
+  "a_failure_mode": "YouTube fails when content is not searchable, retained, or trusted over time.",
+  "b_failure_mode": "TikTok fails when fast attention does not convert into owned audience or durable trust.",
+  "conditional_verdict": "Use TikTok for fast discovery. Use YouTube for durable content infrastructure.",
+  "final_line": "TikTok accelerates discovery. YouTube stores durable attention.",
+  "risk_level": "medium",
+  "evidence_tier": "platform_strategy_reasoning",
+  "content_formats": [
+    "short_video",
+    "long_video",
+    "newsletter",
+    "playbook_example",
+    "software_object"
+  ]
+}

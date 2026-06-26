@@ -1,0 +1,29 @@
+{
+  "comparison_id": "money_vs_time_life_control",
+  "title": "Money vs Time",
+  "a": "Money",
+  "b": "Time",
+  "primary_lens": "Life control",
+  "secondary_lens": "Irreversibility",
+  "context": "Life priorities, financial behavior, survival pressure, and personal decision-making",
+  "surface_question": "Which matters more, money or time?",
+  "a_root": "Stored exchange power.",
+  "b_root": "Irreversible life-capacity.",
+  "a_causal_chain": "value storage -> exchange -> access -> options -> protection -> leverage",
+  "b_causal_chain": "existence -> attention -> action -> experience -> relationship -> life",
+  "hidden_similarity": "Both are allocation systems.",
+  "hidden_difference": "Money can be regained. Time can only be spent.",
+  "a_failure_mode": "Money fails when it becomes the goal instead of a tool, or when trust/value collapses.",
+  "b_failure_mode": "Time fails when it is unstructured, wasted, or consumed without meaningful direction.",
+  "conditional_verdict": "Money protects time when survival is unstable. Time becomes the higher-order value when survival is stable.",
+  "final_line": "Money controls options. Time contains life.",
+  "risk_level": "medium",
+  "evidence_tier": "conceptual_life_reasoning",
+  "content_formats": [
+    "short_video",
+    "long_video",
+    "newsletter",
+    "playbook_example",
+    "software_object"
+  ]
+}

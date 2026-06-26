@@ -1,0 +1,29 @@
+{
+  "comparison_id": "audience_vs_customer_income_reality",
+  "title": "Audience vs Customer",
+  "a": "Audience",
+  "b": "Customer",
+  "primary_lens": "Income reality",
+  "secondary_lens": "Attention conversion",
+  "context": "Creator economy, business building, audience ownership, and monetization",
+  "surface_question": "Is having an audience the same as having a business?",
+  "a_root": "A group giving attention.",
+  "b_root": "A person exchanging money for value.",
+  "a_causal_chain": "content -> attention -> repeated exposure -> trust -> interest -> possible offer response",
+  "b_causal_chain": "need -> offer -> perceived value -> payment -> delivery -> satisfaction or churn",
+  "hidden_similarity": "Both are relationships based on perceived value.",
+  "hidden_difference": "Audience gives attention. Customer gives payment.",
+  "a_failure_mode": "Audience fails when attention does not convert into trust, need, offer response, or payment.",
+  "b_failure_mode": "Customer relationship fails when the paid value does not satisfy the promise.",
+  "conditional_verdict": "Build audience for reach, but build customers for income.",
+  "final_line": "An audience gives attention. A customer gives payment.",
+  "risk_level": "low",
+  "evidence_tier": "conceptual_business_reasoning",
+  "content_formats": [
+    "short_video",
+    "long_video",
+    "newsletter",
+    "playbook_example",
+    "software_object"
+  ]
+}

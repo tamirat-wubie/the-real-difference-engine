@@ -1,0 +1,29 @@
+{
+  "comparison_id": "product_vs_brand_value_memory",
+  "title": "Product vs Brand",
+  "a": "Product",
+  "b": "Brand",
+  "primary_lens": "Value memory",
+  "secondary_lens": "Trust",
+  "context": "Business, marketing, creator products, and customer trust",
+  "surface_question": "Is a brand just a logo, name, or color?",
+  "a_root": "A functional solution to a problem.",
+  "b_root": "Stored trust and meaning in the mind of an audience.",
+  "a_causal_chain": "problem -> solution -> use -> outcome -> satisfaction or failure",
+  "b_causal_chain": "repeated signal -> memory -> trust -> expectation -> preference -> loyalty",
+  "hidden_similarity": "Both create value.",
+  "hidden_difference": "Product delivers utility. Brand preserves trust memory.",
+  "a_failure_mode": "Product fails when it does not solve the problem or creates poor user experience.",
+  "b_failure_mode": "Brand fails when promise and reality diverge.",
+  "conditional_verdict": "A good product earns trust. A strong brand stores it.",
+  "final_line": "A product solves a problem. A brand stores trust.",
+  "risk_level": "low",
+  "evidence_tier": "conceptual_business_reasoning",
+  "content_formats": [
+    "short_video",
+    "long_video",
+    "newsletter",
+    "playbook_example",
+    "software_object"
+  ]
+}
