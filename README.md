@@ -37,6 +37,16 @@ This is a public source-available product workspace. The content, method, compar
 
 Generated drafts are reproducible from the comparison JSON files and are intentionally ignored by Git.
 
+## Public Library
+
+The static comparison library is generated from `data/comparisons/*.json`:
+
+```bash
+python tools/generate_site.py
+```
+
+GitHub Pages deploys the generated `site/` output from the `main` branch.
+
 ## Local Checks
 
 Run the full local verification path:
@@ -51,6 +61,7 @@ Run individual checks:
 python tools/validate_all.py
 python -m unittest discover -s tests -p "test_*.py"
 python tools/batch_generate.py
+python tools/generate_site.py
 ```
 
 ## Example

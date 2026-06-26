@@ -4,7 +4,7 @@
   "a": "Custom Deep Comparison Reports",
   "b": "Method",
   "primary_lens": "Paid decision support",
-  "secondary_lens": "",
+  "secondary_lens": "Decision clarity",
   "context": "Content, education, decision-making, and platform development",
   "surface_question": "What is the real difference between Custom Deep Comparison Reports and Method?",
   "a_root": "A distinct mechanism in the comparison.",
@@ -25,5 +25,7 @@
     "newsletter",
     "playbook_example",
     "software_object"
-  ]
+  ],
+  "pipeline_status": "validated",
+  "source_requirements": "conceptual_only"
 }

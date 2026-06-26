@@ -17,6 +17,21 @@ From repo root:
 python tools/check.py
 ```
 
+## Generate public comparison library
+
+```bash
+python tools/generate_site.py
+```
+
+Output goes to:
+
+```text
+site/
+  index.html
+  assets/styles.css
+  comparisons/*.html
+```
+
 ## Validate comparison JSON files
 
 From repo root:
@@ -40,7 +55,7 @@ generated/
   newsletters/
 ```
 
-The `generated/` directory is ignored by Git because it can be rebuilt from `data/comparisons/`.
+The `generated/` and `site/` directories are ignored by Git because they can be rebuilt from `data/comparisons/`.
 
 ## Run unit tests
 

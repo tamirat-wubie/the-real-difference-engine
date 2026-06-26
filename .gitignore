@@ -7,6 +7,7 @@ venv/
 
 # Generated outputs
 generated/
+site/
 dist/
 build/
 

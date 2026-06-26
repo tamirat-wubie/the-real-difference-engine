@@ -25,5 +25,7 @@
     "newsletter",
     "playbook_example",
     "software_object"
-  ]
+  ],
+  "pipeline_status": "validated",
+  "source_requirements": "citations_recommended"
 }

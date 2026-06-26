@@ -24,8 +24,44 @@ Every comparison object should include:
   "final_line": "",
   "risk_level": "",
   "evidence_tier": "",
+  "source_requirements": "",
+  "pipeline_status": "",
   "content_formats": []
 }
 ```
 
 This is the reusable data unit for short videos, long videos, newsletters, custom reports, and future software.
+
+## Controlled Fields
+
+`risk_level`:
+
+- `low`
+- `medium`
+- `high`
+
+`source_requirements`:
+
+- `conceptual_only`
+- `citations_recommended`
+- `citations_required`
+- `domain_review_required`
+
+`pipeline_status`:
+
+- `idea`
+- `scored`
+- `drafted`
+- `validated`
+- `published`
+- `measured`
+- `expanded`
+
+`content_formats`:
+
+- `short_video`
+- `long_video`
+- `newsletter`
+- `playbook_example`
+- `custom_report`
+- `software_object`

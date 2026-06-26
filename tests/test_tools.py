@@ -13,6 +13,7 @@ sys.path.insert(0, str(TOOLS_DIR))
 
 from comparison_validator import validate_comparison  # noqa: E402
 from final_line_builder import rank_final_lines  # noqa: E402
+from generate_site import render_comparison, render_home  # noqa: E402
 from script_generator import generate_short_script  # noqa: E402
 from topic_scorer import TopicScoreInput, score_topic  # noqa: E402
 
@@ -23,6 +24,7 @@ VALID_COMPARISON: dict[str, object] = {
     "a": "Alpha",
     "b": "Beta",
     "primary_lens": "Decision quality",
+    "secondary_lens": "Action selection",
     "context": "A test context",
     "surface_question": "Which one is better?",
     "a_root": "structured option search.",
@@ -36,6 +38,10 @@ VALID_COMPARISON: dict[str, object] = {
     "conditional_verdict": "Alpha wins when discovery matters; Beta wins when closure matters.",
     "final_line": "Alpha expands options. Beta chooses action.",
     "risk_level": "low",
+    "evidence_tier": "conceptual_test_reasoning",
+    "source_requirements": "conceptual_only",
+    "pipeline_status": "validated",
+    "content_formats": ["short_video", "newsletter", "software_object"],
 }
 
 
@@ -56,6 +62,21 @@ class ComparisonValidatorTests(unittest.TestCase):
         self.assertEqual(result["status"], "invalid")
         self.assertIn("Missing required field: final_line", result["errors"])
         self.assertIn("Primary lens is missing or too vague.", result["errors"])
+
+    def test_medium_risk_requires_source_plan(self) -> None:
+        comparison = {
+            **VALID_COMPARISON,
+            "risk_level": "medium",
+            "source_requirements": "conceptual_only",
+        }
+
+        result = validate_comparison(comparison)
+
+        self.assertEqual(result["status"], "invalid")
+        self.assertIn(
+            "Medium and high risk comparisons require citation or review planning.",
+            result["errors"],
+        )
 
 
 class FinalLineBuilderTests(unittest.TestCase):
@@ -105,6 +126,28 @@ class ScriptGeneratorTests(unittest.TestCase):
         self.assertIn("People compare Alpha and Beta the wrong way.", script)
         self.assertIn("The real lens is Decision quality.", script)
         self.assertIn("Alpha expands options. Beta chooses action.", script)
+
+
+class SiteGeneratorTests(unittest.TestCase):
+    def test_render_home_links_comparison_pages(self) -> None:
+        html = render_home([VALID_COMPARISON])
+
+        self.assertIn("The Real Difference Engine", html)
+        self.assertIn("comparisons/test_topic.html", html)
+        self.assertIn("Alpha expands options. Beta chooses action.", html)
+
+    def test_render_comparison_escapes_html_content(self) -> None:
+        comparison = {
+            **VALID_COMPARISON,
+            "title": "Alpha < Beta",
+            "final_line": "Alpha <script> Beta",
+        }
+
+        html = render_comparison(comparison)
+
+        self.assertIn("Alpha &lt; Beta", html)
+        self.assertIn("Alpha &lt;script&gt; Beta", html)
+        self.assertNotIn("<script>", html)
 
 
 if __name__ == "__main__":

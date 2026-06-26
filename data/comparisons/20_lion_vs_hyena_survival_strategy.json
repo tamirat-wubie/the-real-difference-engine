@@ -4,7 +4,7 @@
   "a": "Lion",
   "b": "Hyena",
   "primary_lens": "Survival strategy",
-  "secondary_lens": "",
+  "secondary_lens": "Dominance vs coordination",
   "context": "Content, education, decision-making, and platform development",
   "surface_question": "What is the real difference between Lion and Hyena?",
   "a_root": "A distinct mechanism in the comparison.",
@@ -25,5 +25,7 @@
     "newsletter",
     "playbook_example",
     "software_object"
-  ]
+  ],
+  "pipeline_status": "validated",
+  "source_requirements": "conceptual_only"
 }

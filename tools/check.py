@@ -20,6 +20,7 @@ def main() -> int:
     checks = [
         [sys.executable, "tools/validate_all.py"],
         [sys.executable, "-m", "unittest", "discover", "-s", "tests", "-p", "test_*.py"],
+        [sys.executable, "tools/generate_site.py"],
     ]
 
     for command in checks:

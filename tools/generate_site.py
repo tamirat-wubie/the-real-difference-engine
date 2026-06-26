@@ -1,0 +1,387 @@
+"""Generate the public static comparison library from validated JSON objects."""
+
+from __future__ import annotations
+
+import argparse
+import html
+import json
+from pathlib import Path
+
+from comparison_validator import validate_comparison
+
+
+ROOT = Path(__file__).resolve().parents[1]
+DEFAULT_DATA_DIR = ROOT / "data" / "comparisons"
+DEFAULT_OUTPUT_DIR = ROOT / "site"
+
+
+def load_comparisons(data_dir: Path) -> list[dict[str, object]]:
+    comparisons: list[dict[str, object]] = []
+
+    for path in sorted(data_dir.glob("*.json")):
+        comparison = json.loads(path.read_text(encoding="utf-8"))
+        result = validate_comparison(comparison)
+        if result["status"] != "valid":
+            joined_errors = "; ".join(result["errors"])
+            raise ValueError(f"{path.name} failed validation: {joined_errors}")
+        comparisons.append(comparison)
+
+    if not comparisons:
+        raise ValueError(f"No comparison JSON files found in {data_dir}")
+
+    return comparisons
+
+
+def clean_text(value: object) -> str:
+    return html.escape(str(value).strip(), quote=True)
+
+
+def render_badge(value: object) -> str:
+    return f'<span class="badge">{clean_text(value)}</span>'
+
+
+def render_home(comparisons: list[dict[str, object]]) -> str:
+    cards = "\n".join(
+        f"""
+        <article class="card">
+          <a href="comparisons/{clean_text(comparison["comparison_id"])}.html">
+            <span class="eyebrow">{clean_text(comparison["primary_lens"])}</span>
+            <h2>{clean_text(comparison["title"])}</h2>
+            <p>{clean_text(comparison["final_line"])}</p>
+            <div class="meta">
+              {render_badge(comparison["pipeline_status"])}
+              {render_badge(comparison["source_requirements"])}
+            </div>
+          </a>
+        </article>
+        """
+        for comparison in comparisons
+    )
+
+    return render_page(
+        title="The Real Difference Engine",
+        body=f"""
+        <section class="hero">
+          <p class="eyebrow">Public comparison library</p>
+          <h1>The Real Difference Engine</h1>
+          <p class="lede">Deep comparisons from first principles. Every page declares the lens, roots, causal chains, hidden similarity, hidden difference, verdict, and final line.</p>
+        </section>
+        <section class="toolbar">
+          <strong>{len(comparisons)} comparisons</strong>
+          <span>No lens, no useful truth.</span>
+        </section>
+        <section class="grid">
+          {cards}
+        </section>
+        """,
+    )
+
+
+def render_comparison(comparison: dict[str, object]) -> str:
+    content_formats = comparison.get("content_formats", [])
+    format_badges = ""
+    if isinstance(content_formats, list):
+        format_badges = "\n".join(render_badge(content_format) for content_format in content_formats)
+
+    return render_page(
+        title=str(comparison["title"]),
+        body=f"""
+        <nav class="back"><a href="../index.html">Back to library</a></nav>
+        <article class="detail">
+          <p class="eyebrow">{clean_text(comparison["primary_lens"])}</p>
+          <h1>{clean_text(comparison["title"])}</h1>
+          <p class="lede">{clean_text(comparison["context"])}</p>
+
+          <section class="verdict">
+            <h2>Final Line</h2>
+            <p>{clean_text(comparison["final_line"])}</p>
+          </section>
+
+          <section class="two-column">
+            <div>
+              <h2>{clean_text(comparison["a"])}</h2>
+              <p>{clean_text(comparison["a_root"])}</p>
+              <code>{clean_text(comparison["a_causal_chain"])}</code>
+              <p class="failure">{clean_text(comparison["a_failure_mode"])}</p>
+            </div>
+            <div>
+              <h2>{clean_text(comparison["b"])}</h2>
+              <p>{clean_text(comparison["b_root"])}</p>
+              <code>{clean_text(comparison["b_causal_chain"])}</code>
+              <p class="failure">{clean_text(comparison["b_failure_mode"])}</p>
+            </div>
+          </section>
+
+          <section class="two-column">
+            <div>
+              <h2>Hidden Similarity</h2>
+              <p>{clean_text(comparison["hidden_similarity"])}</p>
+            </div>
+            <div>
+              <h2>Hidden Difference</h2>
+              <p>{clean_text(comparison["hidden_difference"])}</p>
+            </div>
+          </section>
+
+          <section>
+            <h2>Conditional Verdict</h2>
+            <p>{clean_text(comparison["conditional_verdict"])}</p>
+          </section>
+
+          <section class="meta-panel">
+            <h2>Publishing Metadata</h2>
+            <div class="meta">
+              {render_badge(comparison["risk_level"])}
+              {render_badge(comparison["evidence_tier"])}
+              {render_badge(comparison["source_requirements"])}
+              {render_badge(comparison["pipeline_status"])}
+            </div>
+            <div class="meta">{format_badges}</div>
+          </section>
+        </article>
+        """,
+    )
+
+
+def render_page(title: str, body: str) -> str:
+    return f"""<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{clean_text(title)}</title>
+  <link rel="stylesheet" href="{'../' if title != 'The Real Difference Engine' else ''}assets/styles.css">
+</head>
+<body>
+  <main>
+    {body}
+  </main>
+</body>
+</html>
+"""
+
+
+def render_styles() -> str:
+    return """
+:root {
+  color-scheme: light;
+  --ink: #151515;
+  --muted: #5d5d5d;
+  --line: #d9d4ca;
+  --paper: #faf8f3;
+  --panel: #ffffff;
+  --accent: #126b5c;
+  --accent-dark: #0d4f45;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: var(--paper);
+  color: var(--ink);
+  font-family: Arial, Helvetica, sans-serif;
+  line-height: 1.55;
+}
+
+main {
+  max-width: 1120px;
+  margin: 0 auto;
+  padding: 40px 20px 64px;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+h1 {
+  margin: 0;
+  font-size: 48px;
+  line-height: 1.05;
+}
+
+h2 {
+  margin: 0 0 12px;
+  font-size: 22px;
+  line-height: 1.2;
+}
+
+p {
+  margin: 0 0 16px;
+}
+
+code {
+  display: block;
+  width: 100%;
+  padding: 12px;
+  overflow-wrap: anywhere;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: #f4f1e9;
+  color: var(--accent-dark);
+}
+
+section {
+  margin-top: 28px;
+}
+
+.hero {
+  padding: 28px 0 24px;
+  border-bottom: 1px solid var(--line);
+}
+
+.lede {
+  max-width: 760px;
+  margin-top: 16px;
+  color: var(--muted);
+  font-size: 20px;
+}
+
+.eyebrow {
+  margin-bottom: 10px;
+  color: var(--accent-dark);
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0;
+  text-transform: uppercase;
+}
+
+.toolbar {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 16px 0;
+  color: var(--muted);
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 16px;
+}
+
+.card a,
+.detail,
+.verdict,
+.two-column > div,
+.meta-panel {
+  display: block;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--panel);
+}
+
+.card a {
+  min-height: 220px;
+  padding: 18px;
+}
+
+.card a:hover {
+  border-color: var(--accent);
+}
+
+.meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 16px;
+}
+
+.badge {
+  padding: 4px 8px;
+  border-radius: 999px;
+  background: #e6f0ed;
+  color: var(--accent-dark);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.back {
+  margin-bottom: 20px;
+  color: var(--accent-dark);
+  font-weight: 700;
+}
+
+.detail {
+  padding: 24px;
+}
+
+.verdict {
+  padding: 20px;
+  border-color: var(--accent);
+}
+
+.verdict p {
+  font-size: 24px;
+  font-weight: 700;
+}
+
+.two-column {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.two-column > div,
+.meta-panel {
+  padding: 18px;
+}
+
+.failure {
+  margin-top: 14px;
+  color: var(--muted);
+}
+
+@media (max-width: 720px) {
+  main {
+    padding: 28px 14px 48px;
+  }
+
+  h1 {
+    font-size: 34px;
+  }
+
+  .toolbar,
+  .two-column {
+    display: block;
+  }
+
+  .two-column > div + div {
+    margin-top: 16px;
+  }
+}
+""".strip() + "\n"
+
+
+def write_site(comparisons: list[dict[str, object]], output_dir: Path) -> None:
+    comparison_dir = output_dir / "comparisons"
+    assets_dir = output_dir / "assets"
+
+    comparison_dir.mkdir(parents=True, exist_ok=True)
+    assets_dir.mkdir(parents=True, exist_ok=True)
+
+    (output_dir / "index.html").write_text(render_home(comparisons), encoding="utf-8")
+    (assets_dir / "styles.css").write_text(render_styles(), encoding="utf-8")
+
+    for comparison in comparisons:
+        comparison_path = comparison_dir / f"{comparison['comparison_id']}.html"
+        comparison_path.write_text(render_comparison(comparison), encoding="utf-8")
+
+
+def main() -> int:
+    parser = argparse.ArgumentParser(description="Generate static comparison library.")
+    parser.add_argument("--data-dir", type=Path, default=DEFAULT_DATA_DIR)
+    parser.add_argument("--output-dir", type=Path, default=DEFAULT_OUTPUT_DIR)
+    args = parser.parse_args()
+
+    comparisons = load_comparisons(args.data_dir)
+    write_site(comparisons, args.output_dir)
+    print(f"Generated {len(comparisons)} comparison pages in {args.output_dir}")
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())
