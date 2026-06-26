@@ -32,6 +32,24 @@ site/
   comparisons/*.html
 ```
 
+## Generate audience signal rollup
+
+```bash
+python tools/signal_rollup.py
+```
+
+Input:
+
+```text
+data/signals/audience_signals.csv
+```
+
+Output:
+
+```text
+reports/signal_rollup.md
+```
+
 ## Validate comparison JSON files
 
 From repo root:
@@ -55,7 +73,7 @@ generated/
   newsletters/
 ```
 
-The `generated/` and `site/` directories are ignored by Git because they can be rebuilt from `data/comparisons/`.
+The `generated/`, `site/`, and `reports/` directories are ignored by Git because they can be rebuilt from source data.
 
 ## Run unit tests
 

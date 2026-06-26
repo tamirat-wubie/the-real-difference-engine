@@ -51,6 +51,14 @@ python tools/generate_site.py
 
 GitHub Pages deploys the generated `site/` output from the `main` branch.
 
+## Audience Loop
+
+Public requests and audience signals are collected through GitHub issue forms. Local signal data can be summarized with:
+
+```bash
+python tools/signal_rollup.py
+```
+
 ## Local Checks
 
 Run the full local verification path:
@@ -66,6 +74,7 @@ python tools/validate_all.py
 python -m unittest discover -s tests -p "test_*.py"
 python tools/batch_generate.py
 python tools/generate_site.py
+python tools/signal_rollup.py
 ```
 
 ## Example

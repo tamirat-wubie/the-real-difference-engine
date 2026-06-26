@@ -1,0 +1,48 @@
+name: Comparison Request
+description: Suggest two things to compare through a specific lens.
+title: "[comparison request] A vs B through lens"
+labels: ["comparison-request"]
+body:
+  - type: input
+    id: a
+    attributes:
+      label: A
+      description: First thing to compare.
+      placeholder: Money
+    validations:
+      required: true
+  - type: input
+    id: b
+    attributes:
+      label: B
+      description: Second thing to compare.
+      placeholder: Time
+    validations:
+      required: true
+  - type: input
+    id: lens
+    attributes:
+      label: Lens
+      description: The dimension that makes the comparison useful.
+      placeholder: Life control
+    validations:
+      required: true
+  - type: textarea
+    id: context
+    attributes:
+      label: Context
+      description: Where this comparison will be used or why it matters.
+      placeholder: Personal decision-making, creator content, business strategy...
+    validations:
+      required: false
+  - type: dropdown
+    id: risk_level
+    attributes:
+      label: Risk level
+      description: Choose higher risk when the comparison touches finance, law, medicine, public claims, or current events.
+      options:
+        - low
+        - medium
+        - high
+    validations:
+      required: true

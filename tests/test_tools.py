@@ -15,6 +15,7 @@ from comparison_validator import validate_comparison  # noqa: E402
 from final_line_builder import rank_final_lines  # noqa: E402
 from generate_site import render_comparison, render_home  # noqa: E402
 from script_generator import generate_short_script  # noqa: E402
+from signal_rollup import SignalRow, build_rollup, render_rollup, score_signal  # noqa: E402
 from topic_scorer import TopicScoreInput, score_topic  # noqa: E402
 
 
@@ -134,6 +135,7 @@ class SiteGeneratorTests(unittest.TestCase):
 
         self.assertIn("The Real Difference Engine", html)
         self.assertIn("comparisons/test_topic.html", html)
+        self.assertIn("comparison_request.yml", html)
         self.assertIn("Alpha expands options. Beta chooses action.", html)
 
     def test_render_comparison_escapes_html_content(self) -> None:
@@ -148,6 +150,33 @@ class SiteGeneratorTests(unittest.TestCase):
         self.assertIn("Alpha &lt; Beta", html)
         self.assertIn("Alpha &lt;script&gt; Beta", html)
         self.assertNotIn("<script>", html)
+
+
+class SignalRollupTests(unittest.TestCase):
+    def test_score_signal_weights_different_signal_types(self) -> None:
+        self.assertEqual(score_signal("comment", 2), 6.0)
+        self.assertEqual(score_signal("share", 3), 15.0)
+        self.assertEqual(score_signal("conversion", 1), 10.0)
+
+    def test_build_rollup_orders_by_weighted_score(self) -> None:
+        rows = [
+            SignalRow("alpha_vs_beta", "shorts", "view", 100, ""),
+            SignalRow("gamma_vs_delta", "shorts", "share", 2, ""),
+            SignalRow("alpha_vs_beta", "shorts", "comment", 1, ""),
+        ]
+
+        rollup = build_rollup(rows)
+
+        self.assertEqual(rollup[0][0], "gamma_vs_delta")
+        self.assertEqual(rollup[0][1], 10.0)
+        self.assertEqual(rollup[1][2], 2)
+
+    def test_render_rollup_handles_empty_signal_set(self) -> None:
+        report = render_rollup([])
+
+        self.assertIn("Audience Signal Rollup", report)
+        self.assertIn("No audience signals recorded yet.", report)
+        self.assertNotIn("| Rank |", report)
 
 
 if __name__ == "__main__":

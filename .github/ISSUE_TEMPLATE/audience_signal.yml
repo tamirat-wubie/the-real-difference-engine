@@ -1,0 +1,49 @@
+name: Audience Signal
+description: Record public response data from a comparison post.
+title: "[audience signal] comparison_id on platform"
+labels: ["audience-signal"]
+body:
+  - type: input
+    id: comparison_id
+    attributes:
+      label: Comparison ID
+      description: Use the JSON comparison_id when known.
+      placeholder: discipline_vs_motivation_behavior_continuity
+    validations:
+      required: true
+  - type: input
+    id: platform
+    attributes:
+      label: Platform
+      placeholder: TikTok, YouTube Shorts, Instagram, LinkedIn, Newsletter
+    validations:
+      required: true
+  - type: dropdown
+    id: signal_type
+    attributes:
+      label: Signal type
+      options:
+        - view
+        - like
+        - comment
+        - save
+        - share
+        - request
+        - conversion
+    validations:
+      required: true
+  - type: input
+    id: signal_value
+    attributes:
+      label: Signal value
+      description: Numeric count for the selected signal.
+      placeholder: "12"
+    validations:
+      required: true
+  - type: textarea
+    id: notes
+    attributes:
+      label: Notes
+      description: Add comment text, audience phrasing, or follow-up context.
+    validations:
+      required: false

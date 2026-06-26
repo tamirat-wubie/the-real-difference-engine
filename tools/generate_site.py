@@ -6,6 +6,7 @@ import argparse
 import html
 import json
 from pathlib import Path
+from urllib.parse import urlencode
 
 from comparison_validator import validate_comparison
 
@@ -13,6 +14,14 @@ from comparison_validator import validate_comparison
 ROOT = Path(__file__).resolve().parents[1]
 DEFAULT_DATA_DIR = ROOT / "data" / "comparisons"
 DEFAULT_OUTPUT_DIR = ROOT / "site"
+REPOSITORY_URL = "https://github.com/tamirat-wubie/the-real-difference-engine"
+
+
+def issue_url(template: str, labels: list[str] | None = None) -> str:
+    query: dict[str, str] = {"template": template}
+    if labels:
+        query["labels"] = ",".join(labels)
+    return f"{REPOSITORY_URL}/issues/new?{urlencode(query)}"
 
 
 def load_comparisons(data_dir: Path) -> list[dict[str, object]]:
@@ -65,6 +74,10 @@ def render_home(comparisons: list[dict[str, object]]) -> str:
           <p class="eyebrow">Public comparison library</p>
           <h1>The Real Difference Engine</h1>
           <p class="lede">Deep comparisons from first principles. Every page declares the lens, roots, causal chains, hidden similarity, hidden difference, verdict, and final line.</p>
+          <div class="actions">
+            <a class="button" href="{issue_url("comparison_request.yml", ["comparison-request"])}">Request a comparison</a>
+            <a class="button secondary" href="{issue_url("audience_signal.yml", ["audience-signal"])}">Submit audience signal</a>
+          </div>
         </section>
         <section class="toolbar">
           <strong>{len(comparisons)} comparisons</strong>
@@ -137,6 +150,15 @@ def render_comparison(comparison: dict[str, object]) -> str:
               {render_badge(comparison["pipeline_status"])}
             </div>
             <div class="meta">{format_badges}</div>
+          </section>
+
+          <section class="meta-panel">
+            <h2>Audience Loop</h2>
+            <p>Request a related comparison or record a signal from comments, saves, shares, or conversion behavior.</p>
+            <div class="actions compact">
+              <a class="button" href="{issue_url("comparison_request.yml", ["comparison-request"])}">Request related comparison</a>
+              <a class="button secondary" href="{issue_url("audience_signal.yml", ["audience-signal"])}">Record signal</a>
+            </div>
           </section>
         </article>
         """,
@@ -255,6 +277,35 @@ section {
   gap: 16px;
   padding: 16px 0;
   color: var(--muted);
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 22px;
+}
+
+.actions.compact {
+  margin-top: 14px;
+}
+
+.button {
+  display: inline-flex;
+  align-items: center;
+  min-height: 40px;
+  padding: 8px 12px;
+  border: 1px solid var(--accent);
+  border-radius: 6px;
+  background: var(--accent);
+  color: #ffffff;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.button.secondary {
+  background: transparent;
+  color: var(--accent-dark);
 }
 
 .grid {
