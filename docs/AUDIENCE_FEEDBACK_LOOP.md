@@ -49,6 +49,27 @@ Output:
 reports/signal_rollup.md
 ```
 
+## Expansion Decisions
+
+Generate expansion decisions:
+
+```bash
+python tools/expansion_decision.py
+```
+
+Output:
+
+```text
+reports/expansion_decisions.md
+```
+
+Decision states:
+
+- `expand`: promote into deeper formats
+- `hold`: keep collecting signal
+- `revise`: adjust lens, title, hook, or framing
+- `retire`: stop prioritizing the comparison
+
 ## Expansion Rule
 
 Expand comparisons with high weighted signal scores into:

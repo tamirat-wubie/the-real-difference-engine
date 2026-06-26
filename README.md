@@ -57,6 +57,7 @@ Public requests and audience signals are collected through GitHub issue forms. L
 
 ```bash
 python tools/signal_rollup.py
+python tools/expansion_decision.py
 ```
 
 ## Local Checks
@@ -75,6 +76,7 @@ python -m unittest discover -s tests -p "test_*.py"
 python tools/batch_generate.py
 python tools/generate_site.py
 python tools/signal_rollup.py
+python tools/expansion_decision.py
 ```
 
 ## Example

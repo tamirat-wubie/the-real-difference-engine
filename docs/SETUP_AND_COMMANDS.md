@@ -36,6 +36,7 @@ site/
 
 ```bash
 python tools/signal_rollup.py
+python tools/expansion_decision.py
 ```
 
 Input:
@@ -48,6 +49,7 @@ Output:
 
 ```text
 reports/signal_rollup.md
+reports/expansion_decisions.md
 ```
 
 ## Validate comparison JSON files

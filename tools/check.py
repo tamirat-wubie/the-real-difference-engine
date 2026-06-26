@@ -22,6 +22,7 @@ def main() -> int:
         [sys.executable, "-m", "unittest", "discover", "-s", "tests", "-p", "test_*.py"],
         [sys.executable, "tools/generate_site.py"],
         [sys.executable, "tools/signal_rollup.py"],
+        [sys.executable, "tools/expansion_decision.py"],
     ]
 
     for command in checks:

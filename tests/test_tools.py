@@ -12,6 +12,11 @@ TOOLS_DIR = ROOT / "tools"
 sys.path.insert(0, str(TOOLS_DIR))
 
 from comparison_validator import validate_comparison  # noqa: E402
+from expansion_decision import (  # noqa: E402
+    build_expansion_decisions,
+    classify_expansion,
+    render_expansion_decisions,
+)
 from final_line_builder import rank_final_lines  # noqa: E402
 from generate_site import render_comparison, render_home  # noqa: E402
 from script_generator import generate_short_script  # noqa: E402
@@ -177,6 +182,36 @@ class SignalRollupTests(unittest.TestCase):
         self.assertIn("Audience Signal Rollup", report)
         self.assertIn("No audience signals recorded yet.", report)
         self.assertNotIn("| Rank |", report)
+
+
+class ExpansionDecisionTests(unittest.TestCase):
+    def test_classify_expansion_thresholds_are_explicit(self) -> None:
+        self.assertEqual(classify_expansion(150, 6)[0], "expand")
+        self.assertEqual(classify_expansion(50, 2)[0], "hold")
+        self.assertEqual(classify_expansion(20, 3)[0], "revise")
+        self.assertEqual(classify_expansion(10, 5)[0], "retire")
+
+    def test_build_expansion_decisions_uses_weighted_rollup(self) -> None:
+        rows = [
+            SignalRow("alpha_vs_beta", "shorts", "share", 30, ""),
+            SignalRow("alpha_vs_beta", "shorts", "comment", 2, ""),
+            SignalRow("alpha_vs_beta", "shorts", "request", 1, ""),
+            SignalRow("alpha_vs_beta", "shorts", "save", 1, ""),
+            SignalRow("alpha_vs_beta", "shorts", "conversion", 1, ""),
+        ]
+
+        decisions = build_expansion_decisions(rows)
+
+        self.assertEqual(decisions[0].comparison_id, "alpha_vs_beta")
+        self.assertEqual(decisions[0].decision, "expand")
+        self.assertGreaterEqual(decisions[0].score, 120)
+
+    def test_render_expansion_decisions_handles_empty_signal_set(self) -> None:
+        report = render_expansion_decisions([])
+
+        self.assertIn("Expansion Decisions", report)
+        self.assertIn("No audience signals recorded yet.", report)
+        self.assertNotIn("| Comparison |", report)
 
 
 if __name__ == "__main__":
