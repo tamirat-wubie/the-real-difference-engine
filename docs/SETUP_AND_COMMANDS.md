@@ -28,6 +28,7 @@ Output goes to:
 ```text
 site/
   index.html
+  feed.xml
   library.json
   robots.txt
   sitemap.xml
@@ -51,6 +52,8 @@ Each comparison detail page links to a generated markdown export under `site/exp
 Machine-readable integrations can read `site/library.json` for comparison metadata, page URLs, markdown export URLs, and signal decision state when signal rows exist.
 
 Search and crawler discovery files are generated as `site/sitemap.xml` and `site/robots.txt`.
+
+Feed readers can subscribe to `site/feed.xml`.
 
 ## Generate audience signal rollup
 

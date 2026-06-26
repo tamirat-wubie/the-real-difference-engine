@@ -222,6 +222,7 @@ def build_sitemap_urls(comparisons: list[dict[str, object]]) -> list[str]:
     urls = [
         absolute_site_url(),
         absolute_site_url("library.json"),
+        absolute_site_url("feed.xml"),
     ]
     for comparison in comparisons:
         comparison_id = str(comparison["comparison_id"])
@@ -250,6 +251,32 @@ def render_robots() -> str:
         "User-agent: *\n"
         "Allow: /\n"
         f"Sitemap: {absolute_site_url('sitemap.xml')}\n"
+    )
+
+
+def render_feed(comparisons: list[dict[str, object]]) -> str:
+    items: list[str] = []
+    for comparison in comparisons:
+        page_url = absolute_site_url(f"comparisons/{comparison['comparison_id']}.html")
+        items.append(
+            "    <item>\n"
+            f"      <title>{clean_text(comparison['title'])}</title>\n"
+            f"      <link>{clean_text(page_url)}</link>\n"
+            f"      <guid>{clean_text(page_url)}</guid>\n"
+            f"      <description>{clean_text(comparison['final_line'])}</description>\n"
+            "    </item>"
+        )
+    item_entries = "\n".join(items)
+    return (
+        '<?xml version="1.0" encoding="UTF-8"?>\n'
+        '<rss version="2.0">\n'
+        "  <channel>\n"
+        "    <title>The Real Difference Engine</title>\n"
+        f"    <link>{clean_text(absolute_site_url())}</link>\n"
+        "    <description>Deep comparison records from The Real Difference Engine.</description>\n"
+        f"{item_entries}\n"
+        "  </channel>\n"
+        "</rss>\n"
     )
 
 
@@ -516,6 +543,7 @@ def render_page(title: str, body: str, extra_script: str = "") -> str:
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>{clean_text(title)}</title>
+  <link rel="alternate" type="application/rss+xml" title="The Real Difference Engine feed" href="{absolute_site_url('feed.xml')}">
   <link rel="stylesheet" href="{'../' if title != 'The Real Difference Engine' else ''}assets/styles.css">
 </head>
 <body>
@@ -941,9 +969,11 @@ def write_discovery_files(
     output_dir.mkdir(parents=True, exist_ok=True)
     sitemap_path = output_dir / "sitemap.xml"
     robots_path = output_dir / "robots.txt"
+    feed_path = output_dir / "feed.xml"
     sitemap_path.write_text(render_sitemap(comparisons), encoding="utf-8")
     robots_path.write_text(render_robots(), encoding="utf-8")
-    return [sitemap_path, robots_path]
+    feed_path.write_text(render_feed(comparisons), encoding="utf-8")
+    return [sitemap_path, robots_path, feed_path]
 
 
 def write_site(

@@ -30,6 +30,7 @@ from generate_site import (  # noqa: E402
     build_library_index,
     render_comparison,
     render_comparison_markdown,
+    render_feed,
     render_home,
     render_robots,
     render_signal_report,
@@ -188,6 +189,8 @@ class SiteGeneratorTests(unittest.TestCase):
         self.assertIn("comparisons/test_topic.html", html)
         self.assertIn("comparison_request.yml", html)
         self.assertIn("Alpha expands options. Beta chooses action.", html)
+        self.assertIn('type="application/rss+xml"', html)
+        self.assertIn("https://tamirat-wubie.github.io/the-real-difference-engine/feed.xml", html)
         self.assertIn('id="comparison-search"', html)
         self.assertIn('id="lens-filter"', html)
         self.assertIn('data-lens="Decision quality"', html)
@@ -315,8 +318,18 @@ class SiteGeneratorTests(unittest.TestCase):
 
         self.assertIn("https://tamirat-wubie.github.io/the-real-difference-engine/", sitemap)
         self.assertIn("library.json", sitemap)
+        self.assertIn("feed.xml", sitemap)
         self.assertIn("comparisons/test_topic.html", sitemap)
         self.assertIn("exports/test_topic.md", sitemap)
+
+    def test_render_feed_includes_comparison_items(self) -> None:
+        feed = render_feed([VALID_COMPARISON])
+
+        self.assertIn('<rss version="2.0">', feed)
+        self.assertIn("<title>The Real Difference Engine</title>", feed)
+        self.assertIn("<title>Alpha vs Beta</title>", feed)
+        self.assertIn("comparisons/test_topic.html", feed)
+        self.assertIn("Alpha expands options. Beta chooses action.", feed)
 
     def test_render_robots_points_to_sitemap(self) -> None:
         robots = render_robots()
@@ -330,9 +343,10 @@ class SiteGeneratorTests(unittest.TestCase):
         try:
             written_paths = write_discovery_files([VALID_COMPARISON], output_dir)
 
-            self.assertEqual(len(written_paths), 2)
+            self.assertEqual(len(written_paths), 3)
             self.assertTrue((output_dir / "sitemap.xml").exists())
             self.assertTrue((output_dir / "robots.txt").exists())
+            self.assertTrue((output_dir / "feed.xml").exists())
         finally:
             if output_dir.exists():
                 shutil.rmtree(output_dir)
