@@ -26,7 +26,7 @@ from expansion_pack import (  # noqa: E402
     select_expansion_ids,
 )
 from final_line_builder import rank_final_lines  # noqa: E402
-from generate_site import render_comparison, render_home  # noqa: E402
+from generate_site import render_comparison, render_home, render_signal_report  # noqa: E402
 from generate_site import write_expansion_pack_files  # noqa: E402
 from issue_request_ingest import (  # noqa: E402
     IssueRequest,
@@ -187,6 +187,28 @@ class SiteGeneratorTests(unittest.TestCase):
         self.assertIn("Expansion Queue", html)
         self.assertIn("Expansion ready", html)
         self.assertIn("comparisons/test_topic.html", html)
+
+    def test_render_home_shows_audience_signal_report(self) -> None:
+        decisions = build_expansion_decisions(
+            [
+                SignalRow("test_topic", "shorts", "share", 30, ""),
+                SignalRow("test_topic", "shorts", "comment", 2, ""),
+                SignalRow("test_topic", "shorts", "request", 1, ""),
+                SignalRow("test_topic", "shorts", "save", 1, ""),
+                SignalRow("test_topic", "shorts", "conversion", 1, ""),
+            ]
+        )
+
+        html = render_home([VALID_COMPARISON], {"test_topic"}, decisions)
+
+        self.assertIn("Audience Signal Report", html)
+        self.assertIn("Alpha vs Beta", html)
+        self.assertIn("<td>expand</td>", html)
+
+    def test_render_signal_report_hides_empty_signal_set(self) -> None:
+        html = render_signal_report([VALID_COMPARISON], [])
+
+        self.assertEqual(html, "")
 
     def test_render_comparison_escapes_html_content(self) -> None:
         comparison = {

@@ -38,6 +38,8 @@ The site generator reads `data/signals/audience_signals.csv` by default. Compari
 site/expansion_packs/
 ```
 
+When the signal file has rows, the generated home page also publishes an audience signal report with decision, score, signal count, and rationale.
+
 The generated home page also includes static browser-side search and primary lens filtering. No server process is required after the site files are built.
 
 ## Generate audience signal rollup

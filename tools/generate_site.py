@@ -9,7 +9,7 @@ from pathlib import Path
 from urllib.parse import urlencode
 
 from comparison_validator import validate_comparison
-from expansion_decision import build_expansion_decisions
+from expansion_decision import ExpansionDecision, build_expansion_decisions
 from expansion_pack import generate_pack
 from signal_rollup import load_signal_rows
 
@@ -80,9 +80,15 @@ def render_lens_options(comparisons: list[dict[str, object]]) -> str:
 
 def select_expansion_ready_ids(signal_path: Path) -> set[str]:
     rows = load_signal_rows(signal_path)
+    return select_expansion_ready_ids_from_decisions(build_expansion_decisions(rows))
+
+
+def select_expansion_ready_ids_from_decisions(
+    decisions: list[ExpansionDecision],
+) -> set[str]:
     return {
         decision.comparison_id
-        for decision in build_expansion_decisions(rows)
+        for decision in decisions
         if decision.decision == "expand"
     }
 
@@ -125,11 +131,63 @@ def render_expansion_queue(
         """
 
 
+def render_signal_report(
+    comparisons: list[dict[str, object]],
+    decisions: list[ExpansionDecision],
+) -> str:
+    if not decisions:
+        return ""
+
+    comparison_titles = {
+        str(comparison["comparison_id"]): str(comparison["title"])
+        for comparison in comparisons
+    }
+    rows = "\n".join(
+        f"""
+            <tr>
+              <td><a href="comparisons/{clean_text(decision.comparison_id)}.html">{clean_text(comparison_titles.get(decision.comparison_id, decision.comparison_id))}</a></td>
+              <td>{clean_text(decision.decision)}</td>
+              <td>{decision.score:.2f}</td>
+              <td>{decision.signal_count}</td>
+              <td>{clean_text(decision.rationale)}</td>
+            </tr>
+        """
+        for decision in decisions[:8]
+    )
+
+    return f"""
+        <section>
+          <div class="section-heading">
+            <h2>Audience Signal Report</h2>
+            <p>Weighted signal scores decide whether a comparison expands, waits, gets revised, or retires.</p>
+          </div>
+          <div class="table-scroll">
+            <table>
+              <thead>
+                <tr>
+                  <th>Comparison</th>
+                  <th>Decision</th>
+                  <th>Score</th>
+                  <th>Signals</th>
+                  <th>Rationale</th>
+                </tr>
+              </thead>
+              <tbody>
+                {rows}
+              </tbody>
+            </table>
+          </div>
+        </section>
+        """
+
+
 def render_home(
     comparisons: list[dict[str, object]],
     expansion_ready_ids: set[str] | None = None,
+    signal_decisions: list[ExpansionDecision] | None = None,
 ) -> str:
     expansion_ready_ids = expansion_ready_ids or set()
+    signal_decisions = signal_decisions or []
     cards = "\n".join(
         f"""
         <article
@@ -182,6 +240,7 @@ def render_home(
           {cards}
         </section>
         <p class="empty-state" id="empty-state" hidden>No comparisons match the current filters.</p>
+        {render_signal_report(comparisons, signal_decisions)}
         {render_expansion_queue(comparisons, expansion_ready_ids)}
         """,
         extra_script=render_filter_script(),
@@ -481,6 +540,40 @@ section {
   color: var(--muted);
 }
 
+.table-scroll {
+  overflow-x: auto;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--panel);
+}
+
+th,
+td {
+  padding: 12px;
+  border-bottom: 1px solid var(--line);
+  text-align: left;
+  vertical-align: top;
+}
+
+th {
+  color: var(--accent-dark);
+  font-size: 13px;
+}
+
+td {
+  color: var(--muted);
+}
+
+td a {
+  color: var(--ink);
+  font-weight: 700;
+}
+
 .section-heading {
   margin-bottom: 16px;
 }
@@ -653,8 +746,10 @@ def write_site(
     comparisons: list[dict[str, object]],
     output_dir: Path,
     expansion_ready_ids: set[str] | None = None,
+    signal_decisions: list[ExpansionDecision] | None = None,
 ) -> list[Path]:
     expansion_ready_ids = expansion_ready_ids or set()
+    signal_decisions = signal_decisions or []
     comparison_dir = output_dir / "comparisons"
     assets_dir = output_dir / "assets"
 
@@ -662,7 +757,7 @@ def write_site(
     assets_dir.mkdir(parents=True, exist_ok=True)
 
     (output_dir / "index.html").write_text(
-        render_home(comparisons, expansion_ready_ids),
+        render_home(comparisons, expansion_ready_ids, signal_decisions),
         encoding="utf-8",
     )
     (assets_dir / "styles.css").write_text(render_styles(), encoding="utf-8")
@@ -688,8 +783,15 @@ def main() -> int:
     args = parser.parse_args()
 
     comparisons = load_comparisons(args.data_dir)
-    expansion_ready_ids = select_expansion_ready_ids(args.signals)
-    expansion_paths = write_site(comparisons, args.output_dir, expansion_ready_ids)
+    signal_rows = load_signal_rows(args.signals)
+    signal_decisions = build_expansion_decisions(signal_rows)
+    expansion_ready_ids = select_expansion_ready_ids_from_decisions(signal_decisions)
+    expansion_paths = write_site(
+        comparisons,
+        args.output_dir,
+        expansion_ready_ids,
+        signal_decisions,
+    )
     print(
         f"Generated {len(comparisons)} comparison pages and "
         f"{len(expansion_paths)} expansion pack files in {args.output_dir}"
