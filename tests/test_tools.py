@@ -39,6 +39,7 @@ from promote_draft import find_placeholders, promoted_comparison  # noqa: E402
 from script_generator import generate_short_script  # noqa: E402
 from signal_rollup import SignalRow, build_rollup, render_rollup, score_signal  # noqa: E402
 from topic_scorer import TopicScoreInput, score_topic  # noqa: E402
+from validate_runbook import validate_runbook_text  # noqa: E402
 
 
 VALID_COMPARISON: dict[str, object] = {
@@ -359,6 +360,15 @@ class IssueLifecycleTests(unittest.TestCase):
     def test_lifecycle_comments_include_artifact_paths(self) -> None:
         self.assertIn("`drafts/example.json`", draft_created_comment("drafts/example.json"))
         self.assertIn("`data/example.json`", promoted_comment("data/example.json"))
+
+
+class RunbookValidationTests(unittest.TestCase):
+    def test_validate_runbook_text_reports_missing_phrases(self) -> None:
+        missing = validate_runbook_text("## Preconditions\n")
+
+        self.assertIn("python tools/issue_request_ingest.py", missing)
+        self.assertIn("GitHub `Validate` workflow passes", missing)
+        self.assertGreater(len(missing), 2)
 
 
 if __name__ == "__main__":

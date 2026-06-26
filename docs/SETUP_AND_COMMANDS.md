@@ -96,6 +96,12 @@ python tools/issue_lifecycle.py promoted 42 data/comparisons/example.json --clos
 
 Use `--dry-run` before applying labels, comments, or closure.
 
+## Validate request promotion runbook
+
+```bash
+python tools/validate_runbook.py
+```
+
 ## Validate comparison JSON files
 
 From repo root:

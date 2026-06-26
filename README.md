@@ -61,6 +61,7 @@ python tools/promote_draft.py drafts/comparison_requests/example.json
 python tools/issue_lifecycle.py draft-created 42 drafts/comparison_requests/example.json --dry-run
 python tools/signal_rollup.py
 python tools/expansion_decision.py
+python tools/validate_runbook.py
 ```
 
 ## Local Checks

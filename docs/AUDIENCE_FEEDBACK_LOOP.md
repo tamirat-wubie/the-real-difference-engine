@@ -43,6 +43,12 @@ python tools/issue_lifecycle.py promoted 42 data/comparisons/example.json --clos
 
 Lifecycle updates are explicit GitHub writes. Use `--dry-run` to print commands without applying them.
 
+For the complete operator sequence, use:
+
+```text
+docs/REQUEST_PROMOTION_RUNBOOK.md
+```
+
 ## Signal Types
 
 Supported `signal_type` values:
