@@ -189,6 +189,11 @@ class SiteGeneratorTests(unittest.TestCase):
         self.assertIn("comparisons/test_topic.html", html)
         self.assertIn("comparison_request.yml", html)
         self.assertIn("Alpha expands options. Beta chooses action.", html)
+        self.assertIn('<meta name="description"', html)
+        self.assertIn('property="og:title" content="The Real Difference Engine"', html)
+        self.assertIn('property="og:url" content="https://tamirat-wubie.github.io/the-real-difference-engine/"', html)
+        self.assertIn('name="twitter:card" content="summary"', html)
+        self.assertIn('rel="canonical" href="https://tamirat-wubie.github.io/the-real-difference-engine/"', html)
         self.assertIn('type="application/rss+xml"', html)
         self.assertIn("https://tamirat-wubie.github.io/the-real-difference-engine/feed.xml", html)
         self.assertIn('id="comparison-search"', html)
@@ -237,11 +242,16 @@ class SiteGeneratorTests(unittest.TestCase):
 
         self.assertIn("Alpha &lt; Beta", html)
         self.assertIn("Alpha &lt;script&gt; Beta", html)
+        self.assertIn('content="Alpha &lt;script&gt; Beta"', html)
         self.assertNotIn("<script>", html)
 
     def test_render_comparison_links_expansion_pack_when_ready(self) -> None:
         html = render_comparison(VALID_COMPARISON, expansion_ready=True)
 
+        self.assertIn('property="og:title" content="Alpha vs Beta"', html)
+        self.assertIn('property="og:description" content="Alpha expands options. Beta chooses action."', html)
+        self.assertIn('property="og:url" content="https://tamirat-wubie.github.io/the-real-difference-engine/comparisons/test_topic.html"', html)
+        self.assertIn('rel="canonical" href="https://tamirat-wubie.github.io/the-real-difference-engine/comparisons/test_topic.html"', html)
         self.assertIn("Expansion Pack", html)
         self.assertIn("../expansion_packs/test_topic/custom_report_sample.md", html)
         self.assertIn("Lead magnet outline", html)

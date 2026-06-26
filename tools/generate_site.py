@@ -20,6 +20,10 @@ DEFAULT_OUTPUT_DIR = ROOT / "site"
 DEFAULT_SIGNAL_PATH = ROOT / "data" / "signals" / "audience_signals.csv"
 REPOSITORY_URL = "https://github.com/tamirat-wubie/the-real-difference-engine"
 PUBLIC_SITE_URL = "https://tamirat-wubie.github.io/the-real-difference-engine/"
+DEFAULT_SITE_DESCRIPTION = (
+    "Deep comparisons from first principles with explicit lenses, causal chains, "
+    "hidden similarities, hidden differences, verdicts, and final lines."
+)
 
 
 def issue_url(template: str, labels: list[str] | None = None) -> str:
@@ -394,6 +398,8 @@ def render_home(
 
     return render_page(
         title="The Real Difference Engine",
+        description=DEFAULT_SITE_DESCRIPTION,
+        canonical_path="",
         body=f"""
         <section class="hero">
           <p class="eyebrow">Public comparison library</p>
@@ -467,6 +473,8 @@ def render_comparison(
 
     return render_page(
         title=str(comparison["title"]),
+        description=str(comparison["final_line"]),
+        canonical_path=f"comparisons/{comparison['comparison_id']}.html",
         body=f"""
         <nav class="back"><a href="../index.html">Back to library</a></nav>
         <article class="detail">
@@ -536,13 +544,30 @@ def render_comparison(
     )
 
 
-def render_page(title: str, body: str, extra_script: str = "") -> str:
+def render_page(
+    title: str,
+    body: str,
+    description: str = DEFAULT_SITE_DESCRIPTION,
+    canonical_path: str = "",
+    extra_script: str = "",
+) -> str:
+    canonical_url = absolute_site_url(canonical_path)
     return f"""<!doctype html>
 <html lang="en">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>{clean_text(title)}</title>
+  <meta name="description" content="{clean_text(description)}">
+  <link rel="canonical" href="{clean_text(canonical_url)}">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="The Real Difference Engine">
+  <meta property="og:title" content="{clean_text(title)}">
+  <meta property="og:description" content="{clean_text(description)}">
+  <meta property="og:url" content="{clean_text(canonical_url)}">
+  <meta name="twitter:card" content="summary">
+  <meta name="twitter:title" content="{clean_text(title)}">
+  <meta name="twitter:description" content="{clean_text(description)}">
   <link rel="alternate" type="application/rss+xml" title="The Real Difference Engine feed" href="{absolute_site_url('feed.xml')}">
   <link rel="stylesheet" href="{'../' if title != 'The Real Difference Engine' else ''}assets/styles.css">
 </head>

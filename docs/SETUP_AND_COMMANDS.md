@@ -55,6 +55,8 @@ Search and crawler discovery files are generated as `site/sitemap.xml` and `site
 
 Feed readers can subscribe to `site/feed.xml`.
 
+Generated HTML pages include canonical URLs, meta descriptions, Open Graph tags, Twitter summary tags, and RSS discovery metadata.
+
 ## Generate audience signal rollup
 
 ```bash
