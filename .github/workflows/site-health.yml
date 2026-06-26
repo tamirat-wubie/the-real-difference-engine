@@ -1,0 +1,26 @@
+name: Site Health
+
+on:
+  workflow_dispatch:
+    inputs:
+      base_url:
+        description: "Public site base URL"
+        required: false
+        default: "https://tamirat-wubie.github.io/the-real-difference-engine/"
+
+jobs:
+  public-site-health:
+    name: Public site health
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v7
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+
+      - name: Run public site health check
+        run: python tools/site_health.py --base-url "${{ inputs.base_url }}"

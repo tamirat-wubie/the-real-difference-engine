@@ -27,6 +27,12 @@ python tools/site_health.py
 
 This command performs network checks against the public site. It is intentionally separate from `tools/check.py`.
 
+The same check can be run from GitHub Actions after deployment:
+
+```bash
+gh workflow run "Site Health"
+```
+
 ## Generate public comparison library
 
 ```bash
