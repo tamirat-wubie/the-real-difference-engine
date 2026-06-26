@@ -39,6 +39,10 @@ Generated drafts are reproducible from the comparison JSON files and are intenti
 
 ## Public Library
 
+Live site:
+
+https://tamirat-wubie.github.io/the-real-difference-engine/
+
 The static comparison library is generated from `data/comparisons/*.json`:
 
 ```bash
