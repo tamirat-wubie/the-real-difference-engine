@@ -57,6 +57,8 @@ def join_url(base_url: str, path: str = "") -> str:
 def planned_urls(base_url: str, comparison_ids: list[str]) -> list[str]:
     urls = [
         join_url(base_url),
+        join_url(base_url, "changelog.html"),
+        join_url(base_url, "changelog.md"),
         join_url(base_url, "library.json"),
         join_url(base_url, "feed.xml"),
         join_url(base_url, "sitemap.xml"),
@@ -149,10 +151,33 @@ def validate_markdown_export(url: str, text: str) -> HealthResult:
     return HealthResult(url, True, "markdown export ok")
 
 
+def validate_changelog_html(url: str, html: str) -> HealthResult:
+    required_fragments = [
+        "<h1>Changelog</h1>",
+        "Recent public platform updates",
+        'href="changelog.md"',
+        'href="assets/styles.css"',
+    ]
+    missing = [fragment for fragment in required_fragments if fragment not in html]
+    if missing:
+        return HealthResult(url, False, f"changelog html missing: {', '.join(missing)}")
+    return HealthResult(url, True, "changelog html ok")
+
+
+def validate_changelog_markdown(url: str, text: str) -> HealthResult:
+    if not text.startswith("# Changelog") or "Recent public platform updates" not in text:
+        return HealthResult(url, False, "changelog markdown missing expected headings")
+    return HealthResult(url, True, "changelog markdown ok")
+
+
 def validate_url(url: str, text: str) -> HealthResult:
     if url.endswith("/library.json"):
         result, _ = validate_library_json(url, text)
         return result
+    if url.endswith("/changelog.html"):
+        return validate_changelog_html(url, text)
+    if url.endswith("/changelog.md"):
+        return validate_changelog_markdown(url, text)
     if url.endswith("/feed.xml"):
         return validate_feed(url, text)
     if url.endswith("/sitemap.xml"):

@@ -5,6 +5,7 @@ from __future__ import annotations
 import argparse
 import html
 import json
+import subprocess
 from pathlib import Path
 from urllib.parse import urlencode
 
@@ -24,6 +25,7 @@ DEFAULT_SITE_DESCRIPTION = (
     "Deep comparisons from first principles with explicit lenses, causal chains, "
     "hidden similarities, hidden differences, verdicts, and final lines."
 )
+CHANGELOG_DESCRIPTION = "Recent public platform updates from the repository history."
 
 
 def issue_url(template: str, labels: list[str] | None = None) -> str:
@@ -281,6 +283,8 @@ def build_library_index(
 def build_sitemap_urls(comparisons: list[dict[str, object]]) -> list[str]:
     urls = [
         absolute_site_url(),
+        absolute_site_url("changelog.html"),
+        absolute_site_url("changelog.md"),
         absolute_site_url("library.json"),
         absolute_site_url("feed.xml"),
     ]
@@ -337,6 +341,89 @@ def render_feed(comparisons: list[dict[str, object]]) -> str:
         f"{item_entries}\n"
         "  </channel>\n"
         "</rss>\n"
+    )
+
+
+def load_recent_commits(limit: int = 12) -> list[dict[str, str]]:
+    result = subprocess.run(
+        ["git", "log", f"--max-count={limit}", "--pretty=format:%h%x09%s"],
+        cwd=ROOT,
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    if result.returncode != 0:
+        return []
+
+    commits: list[dict[str, str]] = []
+    for line in result.stdout.splitlines():
+        commit_hash, separator, message = line.partition("\t")
+        if separator and commit_hash and message:
+            commits.append({"hash": commit_hash, "message": message})
+    return commits
+
+
+def render_changelog_markdown(commits: list[dict[str, str]]) -> str:
+    lines = [
+        "# Changelog",
+        "",
+        CHANGELOG_DESCRIPTION,
+        "",
+    ]
+    if not commits:
+        lines.extend(["No commit history was available in this build context.", ""])
+        return "\n".join(lines)
+
+    lines.append("## Recent Updates")
+    lines.append("")
+    for commit in commits:
+        lines.append(f"- `{commit['hash']}` {commit['message']}")
+    lines.append("")
+    return "\n".join(lines)
+
+
+def render_changelog_html(commits: list[dict[str, str]]) -> str:
+    if commits:
+        update_items = "\n".join(
+            f"""
+            <article class="card compact-card">
+              <div>
+                <span class="eyebrow">{clean_text(commit["hash"])}</span>
+                <h2>{clean_text(commit["message"])}</h2>
+              </div>
+            </article>
+            """
+            for commit in commits
+        )
+    else:
+        update_items = """
+            <article class="card compact-card">
+              <div>
+                <h2>No commit history available</h2>
+                <p>This build context did not expose repository history.</p>
+              </div>
+            </article>
+        """
+
+    return render_page(
+        title="Changelog",
+        description=CHANGELOG_DESCRIPTION,
+        canonical_path="changelog.html",
+        body=f"""
+        <nav class="back"><a href="index.html">Back to library</a></nav>
+        <section class="hero">
+          <p class="eyebrow">Public release trace</p>
+          <h1>Changelog</h1>
+          <p class="lede">{CHANGELOG_DESCRIPTION}</p>
+          <div class="actions">
+            <a class="button secondary" href="changelog.md">Download markdown</a>
+            <a class="button" href="{REPOSITORY_URL}/commits/main">View repository history</a>
+          </div>
+        </section>
+        <section class="grid">
+          {update_items}
+        </section>
+        """,
     )
 
 
@@ -465,6 +552,7 @@ def render_home(
           <div class="actions">
             <a class="button" href="{issue_url("comparison_request.yml", ["comparison-request"])}">Request a comparison</a>
             <a class="button secondary" href="{issue_url("audience_signal.yml", ["audience-signal"])}">Submit audience signal</a>
+            <a class="button secondary" href="changelog.html">View changelog</a>
           </div>
         </section>
         <section class="toolbar">
@@ -599,6 +687,7 @@ def render_comparison(
           {render_pack_links(comparison, expansion_ready)}
         </article>
         """,
+        asset_prefix="../",
     )
 
 
@@ -608,6 +697,7 @@ def render_page(
     description: str = DEFAULT_SITE_DESCRIPTION,
     canonical_path: str = "",
     json_ld: dict[str, object] | None = None,
+    asset_prefix: str = "",
     extra_script: str = "",
 ) -> str:
     canonical_url = absolute_site_url(canonical_path)
@@ -629,7 +719,7 @@ def render_page(
   <meta name="twitter:title" content="{clean_text(title)}">
   <meta name="twitter:description" content="{clean_text(description)}">
   <link rel="alternate" type="application/rss+xml" title="The Real Difference Engine feed" href="{absolute_site_url('feed.xml')}">
-  <link rel="stylesheet" href="{'../' if title != 'The Real Difference Engine' else ''}assets/styles.css">
+  <link rel="stylesheet" href="{asset_prefix}assets/styles.css">
   {structured_data}
 </head>
 <body>
@@ -889,6 +979,7 @@ td a {
 }
 
 .card a,
+.card > div,
 .detail,
 .verdict,
 .two-column > div,
@@ -901,6 +992,11 @@ td a {
 
 .card a {
   min-height: 220px;
+  padding: 18px;
+}
+
+.card > div {
+  min-height: 170px;
   padding: 18px;
 }
 
@@ -1048,6 +1144,15 @@ def write_library_index(
     return path
 
 
+def write_changelog_files(commits: list[dict[str, str]], output_dir: Path) -> list[Path]:
+    output_dir.mkdir(parents=True, exist_ok=True)
+    html_path = output_dir / "changelog.html"
+    markdown_path = output_dir / "changelog.md"
+    html_path.write_text(render_changelog_html(commits), encoding="utf-8")
+    markdown_path.write_text(render_changelog_markdown(commits), encoding="utf-8")
+    return [html_path, markdown_path]
+
+
 def write_discovery_files(
     comparisons: list[dict[str, object]],
     output_dir: Path,
@@ -1095,8 +1200,9 @@ def write_site(
     expansion_paths = write_expansion_pack_files(comparisons, expansion_ready_ids, output_dir)
     export_paths = write_comparison_exports(comparisons, output_dir)
     library_path = write_library_index(comparisons, signal_decisions, output_dir)
+    changelog_paths = write_changelog_files(load_recent_commits(), output_dir)
     discovery_paths = write_discovery_files(comparisons, output_dir)
-    return expansion_paths + export_paths + [library_path] + discovery_paths
+    return expansion_paths + export_paths + [library_path] + changelog_paths + discovery_paths
 
 
 def main() -> int:

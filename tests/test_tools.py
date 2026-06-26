@@ -31,6 +31,8 @@ from generate_site import (  # noqa: E402
     build_library_index,
     comparison_json_ld,
     home_json_ld,
+    render_changelog_html,
+    render_changelog_markdown,
     render_comparison,
     render_comparison_markdown,
     render_feed,
@@ -40,6 +42,7 @@ from generate_site import (  # noqa: E402
     render_sitemap,
 )
 from generate_site import (  # noqa: E402
+    write_changelog_files,
     write_comparison_exports,
     write_discovery_files,
     write_expansion_pack_files,
@@ -66,6 +69,8 @@ from script_generator import generate_short_script  # noqa: E402
 from site_health import (  # noqa: E402
     join_url,
     planned_urls,
+    validate_changelog_html,
+    validate_changelog_markdown,
     render_results,
     validate_comparison_html,
     validate_feed,
@@ -223,6 +228,7 @@ class SiteGeneratorTests(unittest.TestCase):
         self.assertIn('id="lens-filter"', html)
         self.assertIn('data-lens="Decision quality"', html)
         self.assertIn('data-search="alpha vs beta alpha beta decision quality', html)
+        self.assertIn('href="changelog.html"', html)
         self.assertIn("applyComparisonFilters", html)
 
         structured_data = extract_json_ld(html)
@@ -273,6 +279,7 @@ class SiteGeneratorTests(unittest.TestCase):
         self.assertIn('content="Alpha &lt;script&gt; Beta"', html)
         self.assertIn("Alpha \\u003cscript\\u003e Beta", html)
         self.assertNotIn("<script>", html)
+        self.assertIn('href="../assets/styles.css"', html)
 
     def test_render_comparison_links_expansion_pack_when_ready(self) -> None:
         html = render_comparison(VALID_COMPARISON, expansion_ready=True)
@@ -309,6 +316,35 @@ class SiteGeneratorTests(unittest.TestCase):
         self.assertIn("Comparison ID: test_topic", markdown)
         self.assertIn("## Hidden Difference", markdown)
         self.assertIn("Alpha expands options. Beta chooses action.", markdown)
+
+    def test_render_changelog_outputs_recent_commit_trace(self) -> None:
+        commits = [{"hash": "abc1234", "message": "feat: publish public changelog"}]
+
+        markdown = render_changelog_markdown(commits)
+        html = render_changelog_html(commits)
+
+        self.assertIn("# Changelog", markdown)
+        self.assertIn("`abc1234` feat: publish public changelog", markdown)
+        self.assertIn("<h1>Changelog</h1>", html)
+        self.assertIn("feat: publish public changelog", html)
+        self.assertIn('href="assets/styles.css"', html)
+        self.assertNotIn('href="../assets/styles.css"', html)
+
+    def test_write_changelog_files_writes_public_assets(self) -> None:
+        output_dir = ROOT / "site_changelog_test_output"
+        try:
+            written_paths = write_changelog_files(
+                [{"hash": "abc1234", "message": "feat: publish public changelog"}],
+                output_dir,
+            )
+
+            self.assertEqual(len(written_paths), 2)
+            self.assertTrue((output_dir / "changelog.html").exists())
+            self.assertTrue((output_dir / "changelog.md").exists())
+            self.assertIn("# Changelog", (output_dir / "changelog.md").read_text(encoding="utf-8"))
+        finally:
+            if output_dir.exists():
+                shutil.rmtree(output_dir)
 
     def test_write_expansion_pack_files_writes_pack_assets(self) -> None:
         output_dir = ROOT / "site_test_output"
@@ -373,6 +409,8 @@ class SiteGeneratorTests(unittest.TestCase):
         self.assertIn("https://tamirat-wubie.github.io/the-real-difference-engine/", sitemap)
         self.assertIn("library.json", sitemap)
         self.assertIn("feed.xml", sitemap)
+        self.assertIn("changelog.html", sitemap)
+        self.assertIn("changelog.md", sitemap)
         self.assertIn("comparisons/test_topic.html", sitemap)
         self.assertIn("exports/test_topic.md", sitemap)
 
@@ -458,6 +496,8 @@ class SiteHealthTests(unittest.TestCase):
         urls = planned_urls("https://example.com/base/", ["one", "two", "three", "four"])
 
         self.assertIn("https://example.com/base/library.json", urls)
+        self.assertIn("https://example.com/base/changelog.html", urls)
+        self.assertIn("https://example.com/base/changelog.md", urls)
         self.assertIn("https://example.com/base/comparisons/one.html", urls)
         self.assertIn("https://example.com/base/exports/three.md", urls)
         self.assertNotIn("https://example.com/base/comparisons/four.html", urls)
@@ -486,6 +526,8 @@ class SiteHealthTests(unittest.TestCase):
         self.assertTrue(validate_feed("https://example.com/feed.xml", render_feed([VALID_COMPARISON])).ok)
         self.assertTrue(validate_sitemap("https://example.com/sitemap.xml", render_sitemap([VALID_COMPARISON])).ok)
         self.assertTrue(validate_robots("https://example.com/robots.txt", render_robots()).ok)
+        self.assertTrue(validate_changelog_html("https://example.com/changelog.html", render_changelog_html([])).ok)
+        self.assertTrue(validate_changelog_markdown("https://example.com/changelog.md", render_changelog_markdown([])).ok)
         self.assertTrue(validate_markdown_export("https://example.com/exports/test_topic.md", render_comparison_markdown(VALID_COMPARISON)).ok)
 
     def test_render_results_marks_failures(self) -> None:

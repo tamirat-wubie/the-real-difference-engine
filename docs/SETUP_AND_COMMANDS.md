@@ -44,6 +44,8 @@ Output goes to:
 ```text
 site/
   index.html
+  changelog.html
+  changelog.md
   feed.xml
   library.json
   robots.txt
@@ -64,6 +66,8 @@ When the signal file has rows, the generated home page also publishes an audienc
 The generated home page also includes static browser-side search and primary lens filtering. No server process is required after the site files are built.
 
 Each comparison detail page links to a generated markdown export under `site/exports/`.
+
+The generator also publishes a root changelog page and markdown export from recent Git history. GitHub Pages checks out full history so deployed changelogs can include recent platform updates.
 
 Machine-readable integrations can read `site/library.json` for comparison metadata, page URLs, markdown export URLs, and signal decision state when signal rows exist.
 
