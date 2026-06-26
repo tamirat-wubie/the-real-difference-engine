@@ -31,12 +31,15 @@ from generate_site import (  # noqa: E402
     build_library_index,
     comparison_json_ld,
     home_json_ld,
+    load_roadmap,
     render_changelog_html,
     render_changelog_markdown,
     render_comparison,
     render_comparison_markdown,
     render_feed,
     render_home,
+    render_roadmap_html,
+    render_roadmap_markdown,
     render_robots,
     render_signal_report,
     render_sitemap,
@@ -47,6 +50,7 @@ from generate_site import (  # noqa: E402
     write_discovery_files,
     write_expansion_pack_files,
     write_library_index,
+    write_roadmap_files,
 )
 from issue_request_ingest import (  # noqa: E402
     IssueRequest,
@@ -77,6 +81,8 @@ from site_health import (  # noqa: E402
     validate_home_html,
     validate_library_json,
     validate_markdown_export,
+    validate_roadmap_html,
+    validate_roadmap_markdown,
     validate_robots,
     validate_sitemap,
 )
@@ -115,6 +121,21 @@ VALID_COMPARISON: dict[str, object] = {
     "source_requirements": "conceptual_only",
     "pipeline_status": "validated",
     "content_formats": ["short_video", "newsletter", "software_object"],
+}
+
+VALID_ROADMAP: dict[str, object] = {
+    "schema": "the-real-difference-engine.roadmap.v1",
+    "updated": "2026-06-26",
+    "summary": "Public roadmap for test coverage.",
+    "items": [
+        {
+            "phase": "Now",
+            "status": "shipped",
+            "title": "Test roadmap item",
+            "outcome": "Visitors can inspect planned platform work.",
+            "proof": "Roadmap HTML, markdown, sitemap, and health checks.",
+        }
+    ],
 }
 
 
@@ -228,6 +249,7 @@ class SiteGeneratorTests(unittest.TestCase):
         self.assertIn('id="lens-filter"', html)
         self.assertIn('data-lens="Decision quality"', html)
         self.assertIn('data-search="alpha vs beta alpha beta decision quality', html)
+        self.assertIn('href="roadmap.html"', html)
         self.assertIn('href="changelog.html"', html)
         self.assertIn("applyComparisonFilters", html)
 
@@ -346,6 +368,42 @@ class SiteGeneratorTests(unittest.TestCase):
             if output_dir.exists():
                 shutil.rmtree(output_dir)
 
+    def test_load_roadmap_validates_required_fields(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "roadmap.json"
+            path.write_text(json.dumps(VALID_ROADMAP), encoding="utf-8")
+
+            roadmap = load_roadmap(path)
+
+        self.assertEqual(roadmap["schema"], "the-real-difference-engine.roadmap.v1")
+        self.assertEqual(len(roadmap["items"]), 1)
+        self.assertEqual(roadmap["items"][0]["status"], "shipped")
+
+    def test_render_roadmap_outputs_public_status_trace(self) -> None:
+        markdown = render_roadmap_markdown(VALID_ROADMAP)
+        html = render_roadmap_html(VALID_ROADMAP)
+
+        self.assertIn("# Roadmap", markdown)
+        self.assertIn("Updated: 2026-06-26", markdown)
+        self.assertIn("## Now: Test roadmap item", markdown)
+        self.assertIn("<h1>Roadmap</h1>", html)
+        self.assertIn("Public platform status", html)
+        self.assertIn("Test roadmap item", html)
+        self.assertIn('href="assets/styles.css"', html)
+
+    def test_write_roadmap_files_writes_public_assets(self) -> None:
+        output_dir = ROOT / "site_roadmap_test_output"
+        try:
+            written_paths = write_roadmap_files(VALID_ROADMAP, output_dir)
+
+            self.assertEqual(len(written_paths), 2)
+            self.assertTrue((output_dir / "roadmap.html").exists())
+            self.assertTrue((output_dir / "roadmap.md").exists())
+            self.assertIn("# Roadmap", (output_dir / "roadmap.md").read_text(encoding="utf-8"))
+        finally:
+            if output_dir.exists():
+                shutil.rmtree(output_dir)
+
     def test_write_expansion_pack_files_writes_pack_assets(self) -> None:
         output_dir = ROOT / "site_test_output"
         try:
@@ -411,6 +469,8 @@ class SiteGeneratorTests(unittest.TestCase):
         self.assertIn("feed.xml", sitemap)
         self.assertIn("changelog.html", sitemap)
         self.assertIn("changelog.md", sitemap)
+        self.assertIn("roadmap.html", sitemap)
+        self.assertIn("roadmap.md", sitemap)
         self.assertIn("comparisons/test_topic.html", sitemap)
         self.assertIn("exports/test_topic.md", sitemap)
 
@@ -498,6 +558,8 @@ class SiteHealthTests(unittest.TestCase):
         self.assertIn("https://example.com/base/library.json", urls)
         self.assertIn("https://example.com/base/changelog.html", urls)
         self.assertIn("https://example.com/base/changelog.md", urls)
+        self.assertIn("https://example.com/base/roadmap.html", urls)
+        self.assertIn("https://example.com/base/roadmap.md", urls)
         self.assertIn("https://example.com/base/comparisons/one.html", urls)
         self.assertIn("https://example.com/base/exports/three.md", urls)
         self.assertNotIn("https://example.com/base/comparisons/four.html", urls)
@@ -528,6 +590,8 @@ class SiteHealthTests(unittest.TestCase):
         self.assertTrue(validate_robots("https://example.com/robots.txt", render_robots()).ok)
         self.assertTrue(validate_changelog_html("https://example.com/changelog.html", render_changelog_html([])).ok)
         self.assertTrue(validate_changelog_markdown("https://example.com/changelog.md", render_changelog_markdown([])).ok)
+        self.assertTrue(validate_roadmap_html("https://example.com/roadmap.html", render_roadmap_html(VALID_ROADMAP)).ok)
+        self.assertTrue(validate_roadmap_markdown("https://example.com/roadmap.md", render_roadmap_markdown(VALID_ROADMAP)).ok)
         self.assertTrue(validate_markdown_export("https://example.com/exports/test_topic.md", render_comparison_markdown(VALID_COMPARISON)).ok)
 
     def test_render_results_marks_failures(self) -> None:

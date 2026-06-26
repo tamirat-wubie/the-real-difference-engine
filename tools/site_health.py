@@ -59,6 +59,8 @@ def planned_urls(base_url: str, comparison_ids: list[str]) -> list[str]:
         join_url(base_url),
         join_url(base_url, "changelog.html"),
         join_url(base_url, "changelog.md"),
+        join_url(base_url, "roadmap.html"),
+        join_url(base_url, "roadmap.md"),
         join_url(base_url, "library.json"),
         join_url(base_url, "feed.xml"),
         join_url(base_url, "sitemap.xml"),
@@ -170,6 +172,25 @@ def validate_changelog_markdown(url: str, text: str) -> HealthResult:
     return HealthResult(url, True, "changelog markdown ok")
 
 
+def validate_roadmap_html(url: str, html: str) -> HealthResult:
+    required_fragments = [
+        "<h1>Roadmap</h1>",
+        "Public platform status",
+        'href="roadmap.md"',
+        'href="assets/styles.css"',
+    ]
+    missing = [fragment for fragment in required_fragments if fragment not in html]
+    if missing:
+        return HealthResult(url, False, f"roadmap html missing: {', '.join(missing)}")
+    return HealthResult(url, True, "roadmap html ok")
+
+
+def validate_roadmap_markdown(url: str, text: str) -> HealthResult:
+    if not text.startswith("# Roadmap") or "Updated:" not in text:
+        return HealthResult(url, False, "roadmap markdown missing expected headings")
+    return HealthResult(url, True, "roadmap markdown ok")
+
+
 def validate_url(url: str, text: str) -> HealthResult:
     if url.endswith("/library.json"):
         result, _ = validate_library_json(url, text)
@@ -178,6 +199,10 @@ def validate_url(url: str, text: str) -> HealthResult:
         return validate_changelog_html(url, text)
     if url.endswith("/changelog.md"):
         return validate_changelog_markdown(url, text)
+    if url.endswith("/roadmap.html"):
+        return validate_roadmap_html(url, text)
+    if url.endswith("/roadmap.md"):
+        return validate_roadmap_markdown(url, text)
     if url.endswith("/feed.xml"):
         return validate_feed(url, text)
     if url.endswith("/sitemap.xml"):

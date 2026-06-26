@@ -1,0 +1,42 @@
+{
+  "schema": "the-real-difference-engine.roadmap.v1",
+  "updated": "2026-06-26",
+  "summary": "Public roadmap for turning the comparison library into a repeatable decision-support platform.",
+  "items": [
+    {
+      "phase": "Now",
+      "status": "shipped",
+      "title": "Public comparison library",
+      "outcome": "Visitors can browse validated comparison pages with explicit lenses, causal chains, verdicts, and markdown exports.",
+      "proof": "Static Pages deployment, sitemap, feed, library index, and public health checks."
+    },
+    {
+      "phase": "Now",
+      "status": "shipped",
+      "title": "Audience signal loop",
+      "outcome": "Signals from requests, comments, saves, shares, and conversions can decide which comparisons expand into deeper assets.",
+      "proof": "Signal rollup, expansion decisions, expansion packs, and issue templates."
+    },
+    {
+      "phase": "Next",
+      "status": "planned",
+      "title": "Roadmap and release trace",
+      "outcome": "Visitors can inspect what has shipped, what is planned, and how the platform is changing over time.",
+      "proof": "Public changelog, public roadmap page, markdown exports, sitemap entries, and health checks."
+    },
+    {
+      "phase": "Next",
+      "status": "planned",
+      "title": "Request-to-publish workflow",
+      "outcome": "Approved GitHub comparison requests can move from draft to validated public comparison with clearer operator checkpoints.",
+      "proof": "Request ingest, promotion runbook, lifecycle comments, and validation gates."
+    },
+    {
+      "phase": "Later",
+      "status": "candidate",
+      "title": "Paid custom comparison reports",
+      "outcome": "High-signal comparisons can convert into custom reports with stronger evidence boundaries and reusable delivery assets.",
+      "proof": "Lead magnet outlines, custom report samples, and source requirement metadata."
+    }
+  ]
+}

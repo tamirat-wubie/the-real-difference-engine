@@ -46,6 +46,8 @@ site/
   index.html
   changelog.html
   changelog.md
+  roadmap.html
+  roadmap.md
   feed.xml
   library.json
   robots.txt
@@ -68,6 +70,8 @@ The generated home page also includes static browser-side search and primary len
 Each comparison detail page links to a generated markdown export under `site/exports/`.
 
 The generator also publishes a root changelog page and markdown export from recent Git history. GitHub Pages checks out full history so deployed changelogs can include recent platform updates.
+
+The generator also publishes a root roadmap page and markdown export from `data/platform_roadmap.json`.
 
 Machine-readable integrations can read `site/library.json` for comparison metadata, page URLs, markdown export URLs, and signal decision state when signal rows exist.
 

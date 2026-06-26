@@ -19,6 +19,7 @@ ROOT = Path(__file__).resolve().parents[1]
 DEFAULT_DATA_DIR = ROOT / "data" / "comparisons"
 DEFAULT_OUTPUT_DIR = ROOT / "site"
 DEFAULT_SIGNAL_PATH = ROOT / "data" / "signals" / "audience_signals.csv"
+DEFAULT_ROADMAP_PATH = ROOT / "data" / "platform_roadmap.json"
 REPOSITORY_URL = "https://github.com/tamirat-wubie/the-real-difference-engine"
 PUBLIC_SITE_URL = "https://tamirat-wubie.github.io/the-real-difference-engine/"
 DEFAULT_SITE_DESCRIPTION = (
@@ -26,6 +27,8 @@ DEFAULT_SITE_DESCRIPTION = (
     "hidden similarities, hidden differences, verdicts, and final lines."
 )
 CHANGELOG_DESCRIPTION = "Recent public platform updates from the repository history."
+ROADMAP_DESCRIPTION = "Public platform roadmap with shipped, planned, and candidate work."
+ROADMAP_REQUIRED_ITEM_FIELDS = {"phase", "status", "title", "outcome", "proof"}
 
 
 def issue_url(template: str, labels: list[str] | None = None) -> str:
@@ -50,6 +53,22 @@ def load_comparisons(data_dir: Path) -> list[dict[str, object]]:
         raise ValueError(f"No comparison JSON files found in {data_dir}")
 
     return comparisons
+
+
+def load_roadmap(path: Path) -> dict[str, object]:
+    roadmap = json.loads(path.read_text(encoding="utf-8"))
+    if roadmap.get("schema") != "the-real-difference-engine.roadmap.v1":
+        raise ValueError(f"{path.name} has an unexpected roadmap schema")
+    items = roadmap.get("items")
+    if not isinstance(items, list) or not items:
+        raise ValueError(f"{path.name} must define at least one roadmap item")
+    for index, item in enumerate(items, start=1):
+        if not isinstance(item, dict):
+            raise ValueError(f"{path.name} item {index} must be an object")
+        missing = sorted(ROADMAP_REQUIRED_ITEM_FIELDS - item.keys())
+        if missing:
+            raise ValueError(f"{path.name} item {index} missing fields: {', '.join(missing)}")
+    return roadmap
 
 
 def clean_text(value: object) -> str:
@@ -285,6 +304,8 @@ def build_sitemap_urls(comparisons: list[dict[str, object]]) -> list[str]:
         absolute_site_url(),
         absolute_site_url("changelog.html"),
         absolute_site_url("changelog.md"),
+        absolute_site_url("roadmap.html"),
+        absolute_site_url("roadmap.md"),
         absolute_site_url("library.json"),
         absolute_site_url("feed.xml"),
     ]
@@ -427,6 +448,73 @@ def render_changelog_html(commits: list[dict[str, str]]) -> str:
     )
 
 
+def roadmap_items(roadmap: dict[str, object]) -> list[dict[str, object]]:
+    items = roadmap.get("items", [])
+    if isinstance(items, list):
+        return [item for item in items if isinstance(item, dict)]
+    return []
+
+
+def render_roadmap_markdown(roadmap: dict[str, object]) -> str:
+    lines = [
+        "# Roadmap",
+        "",
+        str(roadmap.get("summary", ROADMAP_DESCRIPTION)),
+        "",
+        f"Updated: {roadmap.get('updated', 'unknown')}",
+        "",
+    ]
+    for item in roadmap_items(roadmap):
+        lines.extend(
+            [
+                f"## {item['phase']}: {item['title']}",
+                "",
+                f"Status: {item['status']}",
+                f"Outcome: {item['outcome']}",
+                f"Proof: {item['proof']}",
+                "",
+            ]
+        )
+    return "\n".join(lines)
+
+
+def render_roadmap_html(roadmap: dict[str, object]) -> str:
+    item_markup = "\n".join(
+        f"""
+        <article class="card compact-card">
+          <div>
+            <span class="eyebrow">{clean_text(item["phase"])} - {clean_text(item["status"])}</span>
+            <h2>{clean_text(item["title"])}</h2>
+            <p>{clean_text(item["outcome"])}</p>
+            <p class="failure">{clean_text(item["proof"])}</p>
+          </div>
+        </article>
+        """
+        for item in roadmap_items(roadmap)
+    )
+
+    return render_page(
+        title="Roadmap",
+        description=ROADMAP_DESCRIPTION,
+        canonical_path="roadmap.html",
+        body=f"""
+        <nav class="back"><a href="index.html">Back to library</a></nav>
+        <section class="hero">
+          <p class="eyebrow">Public platform status</p>
+          <h1>Roadmap</h1>
+          <p class="lede">{clean_text(roadmap.get("summary", ROADMAP_DESCRIPTION))}</p>
+          <div class="actions">
+            <a class="button secondary" href="roadmap.md">Download markdown</a>
+            <a class="button secondary" href="changelog.html">View changelog</a>
+          </div>
+        </section>
+        <section class="grid">
+          {item_markup}
+        </section>
+        """,
+    )
+
+
 def render_expansion_queue(
     comparisons: list[dict[str, object]],
     expansion_ready_ids: set[str],
@@ -552,6 +640,7 @@ def render_home(
           <div class="actions">
             <a class="button" href="{issue_url("comparison_request.yml", ["comparison-request"])}">Request a comparison</a>
             <a class="button secondary" href="{issue_url("audience_signal.yml", ["audience-signal"])}">Submit audience signal</a>
+            <a class="button secondary" href="roadmap.html">View roadmap</a>
             <a class="button secondary" href="changelog.html">View changelog</a>
           </div>
         </section>
@@ -1153,6 +1242,15 @@ def write_changelog_files(commits: list[dict[str, str]], output_dir: Path) -> li
     return [html_path, markdown_path]
 
 
+def write_roadmap_files(roadmap: dict[str, object], output_dir: Path) -> list[Path]:
+    output_dir.mkdir(parents=True, exist_ok=True)
+    html_path = output_dir / "roadmap.html"
+    markdown_path = output_dir / "roadmap.md"
+    html_path.write_text(render_roadmap_html(roadmap), encoding="utf-8")
+    markdown_path.write_text(render_roadmap_markdown(roadmap), encoding="utf-8")
+    return [html_path, markdown_path]
+
+
 def write_discovery_files(
     comparisons: list[dict[str, object]],
     output_dir: Path,
@@ -1172,6 +1270,7 @@ def write_site(
     output_dir: Path,
     expansion_ready_ids: set[str] | None = None,
     signal_decisions: list[ExpansionDecision] | None = None,
+    roadmap: dict[str, object] | None = None,
 ) -> list[Path]:
     expansion_ready_ids = expansion_ready_ids or set()
     signal_decisions = signal_decisions or []
@@ -1201,8 +1300,9 @@ def write_site(
     export_paths = write_comparison_exports(comparisons, output_dir)
     library_path = write_library_index(comparisons, signal_decisions, output_dir)
     changelog_paths = write_changelog_files(load_recent_commits(), output_dir)
+    roadmap_paths = write_roadmap_files(roadmap or load_roadmap(DEFAULT_ROADMAP_PATH), output_dir)
     discovery_paths = write_discovery_files(comparisons, output_dir)
-    return expansion_paths + export_paths + [library_path] + changelog_paths + discovery_paths
+    return expansion_paths + export_paths + [library_path] + changelog_paths + roadmap_paths + discovery_paths
 
 
 def main() -> int:
@@ -1210,10 +1310,12 @@ def main() -> int:
     parser.add_argument("--data-dir", type=Path, default=DEFAULT_DATA_DIR)
     parser.add_argument("--output-dir", type=Path, default=DEFAULT_OUTPUT_DIR)
     parser.add_argument("--signals", type=Path, default=DEFAULT_SIGNAL_PATH)
+    parser.add_argument("--roadmap", type=Path, default=DEFAULT_ROADMAP_PATH)
     args = parser.parse_args()
 
     comparisons = load_comparisons(args.data_dir)
     signal_rows = load_signal_rows(args.signals)
+    roadmap = load_roadmap(args.roadmap)
     signal_decisions = build_expansion_decisions(signal_rows)
     expansion_ready_ids = select_expansion_ready_ids_from_decisions(signal_decisions)
     expansion_paths = write_site(
@@ -1221,6 +1323,7 @@ def main() -> int:
         args.output_dir,
         expansion_ready_ids,
         signal_decisions,
+        roadmap,
     )
     print(
         f"Generated {len(comparisons)} comparison pages and "
