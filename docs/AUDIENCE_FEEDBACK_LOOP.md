@@ -34,6 +34,15 @@ python tools/promote_draft.py drafts/comparison_requests/example.json
 
 Promotion blocks unfinished placeholders, validation failures, and duplicate comparison IDs.
 
+After creating or promoting an artifact, update the source issue lifecycle:
+
+```bash
+python tools/issue_lifecycle.py draft-created 42 drafts/comparison_requests/example.json
+python tools/issue_lifecycle.py promoted 42 data/comparisons/example.json --close
+```
+
+Lifecycle updates are explicit GitHub writes. Use `--dry-run` to print commands without applying them.
+
 ## Signal Types
 
 Supported `signal_type` values:

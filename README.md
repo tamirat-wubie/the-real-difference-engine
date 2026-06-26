@@ -58,6 +58,7 @@ Public requests and audience signals are collected through GitHub issue forms. L
 ```bash
 python tools/issue_request_ingest.py
 python tools/promote_draft.py drafts/comparison_requests/example.json
+python tools/issue_lifecycle.py draft-created 42 drafts/comparison_requests/example.json --dry-run
 python tools/signal_rollup.py
 python tools/expansion_decision.py
 ```

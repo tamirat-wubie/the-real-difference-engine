@@ -80,6 +80,22 @@ The tool writes a validated record into:
 data/comparisons/
 ```
 
+## Update request issue lifecycle
+
+After draft creation:
+
+```bash
+python tools/issue_lifecycle.py draft-created 42 drafts/comparison_requests/example.json
+```
+
+After promotion:
+
+```bash
+python tools/issue_lifecycle.py promoted 42 data/comparisons/example.json --close
+```
+
+Use `--dry-run` before applying labels, comments, or closure.
+
 ## Validate comparison JSON files
 
 From repo root:

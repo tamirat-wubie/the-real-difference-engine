@@ -26,6 +26,15 @@ from issue_request_ingest import (  # noqa: E402
     parse_issue_form_body,
     slugify,
 )
+from issue_lifecycle import (  # noqa: E402
+    DRAFT_CREATED_LABEL,
+    PROMOTED_LABEL,
+    build_action,
+    draft_created_comment,
+    issue_comment_command,
+    issue_edit_command,
+    promoted_comment,
+)
 from promote_draft import find_placeholders, promoted_comparison  # noqa: E402
 from script_generator import generate_short_script  # noqa: E402
 from signal_rollup import SignalRow, build_rollup, render_rollup, score_signal  # noqa: E402
@@ -305,6 +314,51 @@ class DraftPromotionTests(unittest.TestCase):
         self.assertNotIn("request_source", promoted)
         self.assertEqual(promoted["pipeline_status"], "validated")
         self.assertEqual(result["status"], "valid")
+
+
+class IssueLifecycleTests(unittest.TestCase):
+    def test_build_draft_created_action_is_non_closing(self) -> None:
+        action = build_action(
+            mode="draft-created",
+            issue_number=42,
+            artifact_path="drafts/comparison_requests/example.json",
+            repository="owner/repo",
+            close_issue=True,
+        )
+
+        self.assertEqual(action.label, DRAFT_CREATED_LABEL)
+        self.assertFalse(action.close_issue)
+        self.assertIn("Draft comparison request created.", action.comment)
+
+    def test_build_promoted_action_can_close_issue(self) -> None:
+        action = build_action(
+            mode="promoted",
+            issue_number=42,
+            artifact_path="data/comparisons/example.json",
+            repository="owner/repo",
+            close_issue=True,
+        )
+
+        self.assertEqual(action.label, PROMOTED_LABEL)
+        self.assertTrue(action.close_issue)
+        self.assertIn("promoted into the validated library", action.comment)
+
+    def test_lifecycle_commands_are_explicit(self) -> None:
+        action = build_action(
+            mode="promoted",
+            issue_number=42,
+            artifact_path="data/comparisons/example.json",
+            repository="owner/repo",
+            close_issue=True,
+        )
+
+        self.assertIn("--close", issue_edit_command(action))
+        self.assertIn("--add-label", issue_edit_command(action))
+        self.assertIn("--body", issue_comment_command(action))
+
+    def test_lifecycle_comments_include_artifact_paths(self) -> None:
+        self.assertIn("`drafts/example.json`", draft_created_comment("drafts/example.json"))
+        self.assertIn("`data/example.json`", promoted_comment("data/example.json"))
 
 
 if __name__ == "__main__":
