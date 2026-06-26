@@ -1,5 +1,22 @@
 # Setup and Commands
 
+## Repository
+
+```bash
+git clone https://github.com/tamirat-wubie/the-real-difference-engine.git
+cd the-real-difference-engine
+```
+
+This repository is public source-available and all rights reserved.
+
+## Run all checks
+
+From repo root:
+
+```bash
+python tools/check.py
+```
+
 ## Validate comparison JSON files
 
 From repo root:
@@ -23,18 +40,19 @@ generated/
   newsletters/
 ```
 
-## Git initialization
+The `generated/` directory is ignored by Git because it can be rebuilt from `data/comparisons/`.
+
+## Run unit tests
 
 ```bash
-git init
-git add .
-git commit -m "init: add real difference engine MVP operating kit"
+python -m unittest discover -s tests -p "test_*.py"
 ```
 
-## Push to GitHub after creating private repo
+## Git workflow
 
 ```bash
-git remote add origin https://github.com/<owner>/the-real-difference-engine.git
-git branch -M main
+git status
+git add <changed-files>
+git commit -m "describe the change"
 git push -u origin main
 ```

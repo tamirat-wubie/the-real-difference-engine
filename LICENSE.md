@@ -4,4 +4,4 @@ Copyright (c) 2026 Tamirat Lulie Wubie.
 
 All rights reserved.
 
-This repository is intended as a private product-development workspace unless explicitly relicensed later. Do not redistribute, publish, sell, or reuse substantial portions without written permission from the owner.
+This repository is public for visibility, review, and project tracking. Public access does not grant permission to redistribute, publish, sell, sublicense, train on, or reuse substantial portions of the content, method, data, product materials, or source code without written permission from the owner.

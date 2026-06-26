@@ -44,5 +44,5 @@ Focus on:
 - Search Engine vs Chatbot
 - Open Source vs Closed Source
 - Apple vs Android
-- AI Assistant vs Search
+- Symbolic Assistant vs Search
 - Tool vs Platform

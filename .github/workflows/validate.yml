@@ -20,8 +20,5 @@ jobs:
         with:
           python-version: "3.12"
 
-      - name: Validate comparison objects
-        run: python tools/validate_all.py
-
-      - name: Run helper module tests
-        run: python -m unittest discover -s tests -p "test_*.py"
+      - name: Run repository checks
+        run: python tools/check.py

@@ -31,6 +31,28 @@ One comparison object can become:
 - custom report
 - future software object
 
+## Repository Use
+
+This is a public source-available product workspace. The content, method, comparison objects, and product materials remain all rights reserved unless a later license explicitly says otherwise.
+
+Generated drafts are reproducible from the comparison JSON files and are intentionally ignored by Git.
+
+## Local Checks
+
+Run the full local verification path:
+
+```bash
+python tools/check.py
+```
+
+Run individual checks:
+
+```bash
+python tools/validate_all.py
+python -m unittest discover -s tests -p "test_*.py"
+python tools/batch_generate.py
+```
+
 ## Example
 
 **Motivation vs Discipline through behavior continuity**
@@ -73,4 +95,4 @@ This repo should not include private Mullu symbolic architecture, API keys, pass
 
 v3.2 MVP package compiled from chat development.
 
-Ready for private GitHub setup and first-week publishing test.
+Public GitHub repository initialized and ready for the first-week publishing test.
