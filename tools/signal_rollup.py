@@ -57,7 +57,7 @@ def load_signal_rows(input_path: Path) -> list[SignalRow]:
     if not input_path.exists():
         raise FileNotFoundError(f"Missing signal file: {input_path}")
 
-    with input_path.open("r", encoding="utf-8", newline="") as file:
+    with input_path.open("r", encoding="utf-8-sig", newline="") as file:
         reader = csv.DictReader(file)
         fieldnames = set(reader.fieldnames or [])
         missing_fields = REQUIRED_FIELDS - fieldnames

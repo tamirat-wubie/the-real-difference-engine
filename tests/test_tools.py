@@ -3,6 +3,8 @@
 from __future__ import annotations
 
 import sys
+import shutil
+import tempfile
 import unittest
 from pathlib import Path
 
@@ -25,6 +27,7 @@ from expansion_pack import (  # noqa: E402
 )
 from final_line_builder import rank_final_lines  # noqa: E402
 from generate_site import render_comparison, render_home  # noqa: E402
+from generate_site import write_expansion_pack_files  # noqa: E402
 from issue_request_ingest import (  # noqa: E402
     IssueRequest,
     build_draft_comparison,
@@ -43,7 +46,13 @@ from issue_lifecycle import (  # noqa: E402
 )
 from promote_draft import find_placeholders, promoted_comparison  # noqa: E402
 from script_generator import generate_short_script  # noqa: E402
-from signal_rollup import SignalRow, build_rollup, render_rollup, score_signal  # noqa: E402
+from signal_rollup import (  # noqa: E402
+    SignalRow,
+    build_rollup,
+    load_signal_rows,
+    render_rollup,
+    score_signal,
+)
 from topic_scorer import TopicScoreInput, score_topic  # noqa: E402
 from validate_runbook import validate_runbook_text  # noqa: E402
 
@@ -167,6 +176,13 @@ class SiteGeneratorTests(unittest.TestCase):
         self.assertIn("comparison_request.yml", html)
         self.assertIn("Alpha expands options. Beta chooses action.", html)
 
+    def test_render_home_shows_expansion_queue_when_ready(self) -> None:
+        html = render_home([VALID_COMPARISON], {"test_topic"})
+
+        self.assertIn("Expansion Queue", html)
+        self.assertIn("Expansion ready", html)
+        self.assertIn("comparisons/test_topic.html", html)
+
     def test_render_comparison_escapes_html_content(self) -> None:
         comparison = {
             **VALID_COMPARISON,
@@ -180,12 +196,46 @@ class SiteGeneratorTests(unittest.TestCase):
         self.assertIn("Alpha &lt;script&gt; Beta", html)
         self.assertNotIn("<script>", html)
 
+    def test_render_comparison_links_expansion_pack_when_ready(self) -> None:
+        html = render_comparison(VALID_COMPARISON, expansion_ready=True)
+
+        self.assertIn("Expansion Pack", html)
+        self.assertIn("../expansion_packs/test_topic/custom_report_sample.md", html)
+        self.assertIn("Lead magnet outline", html)
+
+    def test_write_expansion_pack_files_writes_pack_assets(self) -> None:
+        output_dir = ROOT / "site_test_output"
+        try:
+            written_paths = write_expansion_pack_files([VALID_COMPARISON], {"test_topic"}, output_dir)
+
+            self.assertEqual(len(written_paths), 4)
+            self.assertTrue((output_dir / "expansion_packs" / "test_topic" / "newsletter.md").exists())
+            self.assertTrue((output_dir / "expansion_packs" / "test_topic" / "lead_magnet_outline.md").exists())
+        finally:
+            if output_dir.exists():
+                shutil.rmtree(output_dir)
+
 
 class SignalRollupTests(unittest.TestCase):
     def test_score_signal_weights_different_signal_types(self) -> None:
         self.assertEqual(score_signal("comment", 2), 6.0)
         self.assertEqual(score_signal("share", 3), 15.0)
         self.assertEqual(score_signal("conversion", 1), 10.0)
+
+    def test_load_signal_rows_accepts_utf8_bom_header(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            signal_path = Path(directory) / "signals.csv"
+            signal_path.write_text(
+                "comparison_id,platform,signal_type,signal_value,notes\n"
+                "test_topic,youtube,request,3,requested\n",
+                encoding="utf-8-sig",
+            )
+
+            rows = load_signal_rows(signal_path)
+
+        self.assertEqual(len(rows), 1)
+        self.assertEqual(rows[0].comparison_id, "test_topic")
+        self.assertEqual(rows[0].signal_type, "request")
 
     def test_build_rollup_orders_by_weighted_score(self) -> None:
         rows = [

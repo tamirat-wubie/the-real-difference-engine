@@ -32,6 +32,12 @@ site/
   comparisons/*.html
 ```
 
+The site generator reads `data/signals/audience_signals.csv` by default. Comparisons with an `expand` decision get an expansion queue entry and generated pack files under:
+
+```text
+site/expansion_packs/
+```
+
 ## Generate audience signal rollup
 
 ```bash

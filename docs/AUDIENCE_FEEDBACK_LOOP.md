@@ -136,3 +136,9 @@ Output:
 ```text
 expansion_packs/
 ```
+
+The public site generator also reads the audience signal file. Comparisons with an `expand` decision are linked from the home page expansion queue, and their pack files are published under:
+
+```text
+site/expansion_packs/
+```

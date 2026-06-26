@@ -9,11 +9,15 @@ from pathlib import Path
 from urllib.parse import urlencode
 
 from comparison_validator import validate_comparison
+from expansion_decision import build_expansion_decisions
+from expansion_pack import generate_pack
+from signal_rollup import load_signal_rows
 
 
 ROOT = Path(__file__).resolve().parents[1]
 DEFAULT_DATA_DIR = ROOT / "data" / "comparisons"
 DEFAULT_OUTPUT_DIR = ROOT / "site"
+DEFAULT_SIGNAL_PATH = ROOT / "data" / "signals" / "audience_signals.csv"
 REPOSITORY_URL = "https://github.com/tamirat-wubie/the-real-difference-engine"
 
 
@@ -49,7 +53,58 @@ def render_badge(value: object) -> str:
     return f'<span class="badge">{clean_text(value)}</span>'
 
 
-def render_home(comparisons: list[dict[str, object]]) -> str:
+def select_expansion_ready_ids(signal_path: Path) -> set[str]:
+    rows = load_signal_rows(signal_path)
+    return {
+        decision.comparison_id
+        for decision in build_expansion_decisions(rows)
+        if decision.decision == "expand"
+    }
+
+
+def expansion_pack_link(comparison_id: object, filename: str) -> str:
+    return f"../expansion_packs/{clean_text(comparison_id)}/{clean_text(filename)}"
+
+
+def render_expansion_queue(
+    comparisons: list[dict[str, object]],
+    expansion_ready_ids: set[str],
+) -> str:
+    if not expansion_ready_ids:
+        return ""
+
+    items = "\n".join(
+        f"""
+        <article class="card compact-card">
+          <a href="comparisons/{clean_text(comparison["comparison_id"])}.html">
+            <span class="eyebrow">Expansion ready</span>
+            <h2>{clean_text(comparison["title"])}</h2>
+            <p>{clean_text(comparison["final_line"])}</p>
+          </a>
+        </article>
+        """
+        for comparison in comparisons
+        if str(comparison["comparison_id"]) in expansion_ready_ids
+    )
+
+    return f"""
+        <section>
+          <div class="section-heading">
+            <h2>Expansion Queue</h2>
+            <p>Comparisons with enough weighted audience signal to become deeper assets.</p>
+          </div>
+          <section class="grid">
+            {items}
+          </section>
+        </section>
+        """
+
+
+def render_home(
+    comparisons: list[dict[str, object]],
+    expansion_ready_ids: set[str] | None = None,
+) -> str:
+    expansion_ready_ids = expansion_ready_ids or set()
     cards = "\n".join(
         f"""
         <article class="card">
@@ -86,11 +141,41 @@ def render_home(comparisons: list[dict[str, object]]) -> str:
         <section class="grid">
           {cards}
         </section>
+        {render_expansion_queue(comparisons, expansion_ready_ids)}
         """,
     )
 
 
-def render_comparison(comparison: dict[str, object]) -> str:
+def render_pack_links(comparison: dict[str, object], expansion_ready: bool) -> str:
+    if not expansion_ready:
+        return ""
+
+    links = [
+        ("Long video outline", "long_video_outline.md"),
+        ("Newsletter", "newsletter.md"),
+        ("Custom report sample", "custom_report_sample.md"),
+        ("Lead magnet outline", "lead_magnet_outline.md"),
+    ]
+    link_markup = "\n".join(
+        f'<a class="button secondary" href="{expansion_pack_link(comparison["comparison_id"], filename)}">{label}</a>'
+        for label, filename in links
+    )
+
+    return f"""
+          <section class="meta-panel">
+            <h2>Expansion Pack</h2>
+            <p>This comparison has enough audience signal for deeper formats.</p>
+            <div class="actions compact">
+              {link_markup}
+            </div>
+          </section>
+          """
+
+
+def render_comparison(
+    comparison: dict[str, object],
+    expansion_ready: bool = False,
+) -> str:
     content_formats = comparison.get("content_formats", [])
     format_badges = ""
     if isinstance(content_formats, list):
@@ -160,6 +245,7 @@ def render_comparison(comparison: dict[str, object]) -> str:
               <a class="button secondary" href="{issue_url("audience_signal.yml", ["audience-signal"])}">Record signal</a>
             </div>
           </section>
+          {render_pack_links(comparison, expansion_ready)}
         </article>
         """,
     )
@@ -279,6 +365,14 @@ section {
   color: var(--muted);
 }
 
+.section-heading {
+  margin-bottom: 16px;
+}
+
+.section-heading p {
+  color: var(--muted);
+}
+
 .actions {
   display: flex;
   flex-wrap: wrap;
@@ -328,6 +422,10 @@ section {
 .card a {
   min-height: 220px;
   padding: 18px;
+}
+
+.compact-card a {
+  min-height: 170px;
 }
 
 .card a:hover {
@@ -407,30 +505,74 @@ section {
 """.strip() + "\n"
 
 
-def write_site(comparisons: list[dict[str, object]], output_dir: Path) -> None:
+def write_expansion_pack_files(
+    comparisons: list[dict[str, object]],
+    expansion_ready_ids: set[str],
+    output_dir: Path,
+) -> list[Path]:
+    written_paths: list[Path] = []
+    expansion_dir = output_dir / "expansion_packs"
+
+    for comparison in comparisons:
+        comparison_id = str(comparison["comparison_id"])
+        if comparison_id not in expansion_ready_ids:
+            continue
+
+        pack_dir = expansion_dir / comparison_id
+        pack_dir.mkdir(parents=True, exist_ok=True)
+        for filename, content in generate_pack(comparison).items():
+            path = pack_dir / filename
+            path.write_text(content.strip() + "\n", encoding="utf-8")
+            written_paths.append(path)
+
+    return written_paths
+
+
+def write_site(
+    comparisons: list[dict[str, object]],
+    output_dir: Path,
+    expansion_ready_ids: set[str] | None = None,
+) -> list[Path]:
+    expansion_ready_ids = expansion_ready_ids or set()
     comparison_dir = output_dir / "comparisons"
     assets_dir = output_dir / "assets"
 
     comparison_dir.mkdir(parents=True, exist_ok=True)
     assets_dir.mkdir(parents=True, exist_ok=True)
 
-    (output_dir / "index.html").write_text(render_home(comparisons), encoding="utf-8")
+    (output_dir / "index.html").write_text(
+        render_home(comparisons, expansion_ready_ids),
+        encoding="utf-8",
+    )
     (assets_dir / "styles.css").write_text(render_styles(), encoding="utf-8")
 
     for comparison in comparisons:
         comparison_path = comparison_dir / f"{comparison['comparison_id']}.html"
-        comparison_path.write_text(render_comparison(comparison), encoding="utf-8")
+        comparison_path.write_text(
+            render_comparison(
+                comparison,
+                str(comparison["comparison_id"]) in expansion_ready_ids,
+            ),
+            encoding="utf-8",
+        )
+
+    return write_expansion_pack_files(comparisons, expansion_ready_ids, output_dir)
 
 
 def main() -> int:
     parser = argparse.ArgumentParser(description="Generate static comparison library.")
     parser.add_argument("--data-dir", type=Path, default=DEFAULT_DATA_DIR)
     parser.add_argument("--output-dir", type=Path, default=DEFAULT_OUTPUT_DIR)
+    parser.add_argument("--signals", type=Path, default=DEFAULT_SIGNAL_PATH)
     args = parser.parse_args()
 
     comparisons = load_comparisons(args.data_dir)
-    write_site(comparisons, args.output_dir)
-    print(f"Generated {len(comparisons)} comparison pages in {args.output_dir}")
+    expansion_ready_ids = select_expansion_ready_ids(args.signals)
+    expansion_paths = write_site(comparisons, args.output_dir, expansion_ready_ids)
+    print(
+        f"Generated {len(comparisons)} comparison pages and "
+        f"{len(expansion_paths)} expansion pack files in {args.output_dir}"
+    )
     return 0
 
 
