@@ -26,8 +26,13 @@ from expansion_pack import (  # noqa: E402
     select_expansion_ids,
 )
 from final_line_builder import rank_final_lines  # noqa: E402
-from generate_site import render_comparison, render_home, render_signal_report  # noqa: E402
-from generate_site import write_expansion_pack_files  # noqa: E402
+from generate_site import (  # noqa: E402
+    render_comparison,
+    render_comparison_markdown,
+    render_home,
+    render_signal_report,
+)
+from generate_site import write_comparison_exports, write_expansion_pack_files  # noqa: E402
 from issue_request_ingest import (  # noqa: E402
     IssueRequest,
     build_draft_comparison,
@@ -229,6 +234,16 @@ class SiteGeneratorTests(unittest.TestCase):
         self.assertIn("Expansion Pack", html)
         self.assertIn("../expansion_packs/test_topic/custom_report_sample.md", html)
         self.assertIn("Lead magnet outline", html)
+        self.assertIn("../exports/test_topic.md", html)
+        self.assertIn("Download markdown", html)
+
+    def test_render_comparison_markdown_exports_core_fields(self) -> None:
+        markdown = render_comparison_markdown(VALID_COMPARISON)
+
+        self.assertIn("# Alpha vs Beta", markdown)
+        self.assertIn("Comparison ID: test_topic", markdown)
+        self.assertIn("## Hidden Difference", markdown)
+        self.assertIn("Alpha expands options. Beta chooses action.", markdown)
 
     def test_write_expansion_pack_files_writes_pack_assets(self) -> None:
         output_dir = ROOT / "site_test_output"
@@ -238,6 +253,18 @@ class SiteGeneratorTests(unittest.TestCase):
             self.assertEqual(len(written_paths), 4)
             self.assertTrue((output_dir / "expansion_packs" / "test_topic" / "newsletter.md").exists())
             self.assertTrue((output_dir / "expansion_packs" / "test_topic" / "lead_magnet_outline.md").exists())
+        finally:
+            if output_dir.exists():
+                shutil.rmtree(output_dir)
+
+    def test_write_comparison_exports_writes_markdown_assets(self) -> None:
+        output_dir = ROOT / "site_export_test_output"
+        try:
+            written_paths = write_comparison_exports([VALID_COMPARISON], output_dir)
+
+            self.assertEqual(len(written_paths), 1)
+            self.assertTrue((output_dir / "exports" / "test_topic.md").exists())
+            self.assertIn("Alpha vs Beta", written_paths[0].read_text(encoding="utf-8"))
         finally:
             if output_dir.exists():
                 shutil.rmtree(output_dir)

@@ -97,6 +97,73 @@ def expansion_pack_link(comparison_id: object, filename: str) -> str:
     return f"../expansion_packs/{clean_text(comparison_id)}/{clean_text(filename)}"
 
 
+def comparison_export_link(comparison_id: object) -> str:
+    return f"../exports/{clean_text(comparison_id)}.md"
+
+
+def render_comparison_markdown(comparison: dict[str, object]) -> str:
+    content_formats = comparison.get("content_formats", [])
+    if isinstance(content_formats, list):
+        content_format_text = ", ".join(str(content_format) for content_format in content_formats)
+    else:
+        content_format_text = ""
+
+    lines = [
+        f"# {comparison['title']}",
+        "",
+        f"Comparison ID: {comparison['comparison_id']}",
+        f"Primary lens: {comparison['primary_lens']}",
+        f"Secondary lens: {comparison['secondary_lens']}",
+        f"Risk level: {comparison['risk_level']}",
+        f"Evidence tier: {comparison['evidence_tier']}",
+        f"Source requirements: {comparison['source_requirements']}",
+        f"Pipeline status: {comparison['pipeline_status']}",
+        f"Content formats: {content_format_text}",
+        "",
+        "## Context",
+        "",
+        str(comparison["context"]),
+        "",
+        "## Surface Question",
+        "",
+        str(comparison["surface_question"]),
+        "",
+        f"## {comparison['a']}",
+        "",
+        str(comparison["a_root"]),
+        "",
+        f"Causal chain: {comparison['a_causal_chain']}",
+        "",
+        f"Failure mode: {comparison['a_failure_mode']}",
+        "",
+        f"## {comparison['b']}",
+        "",
+        str(comparison["b_root"]),
+        "",
+        f"Causal chain: {comparison['b_causal_chain']}",
+        "",
+        f"Failure mode: {comparison['b_failure_mode']}",
+        "",
+        "## Hidden Similarity",
+        "",
+        str(comparison["hidden_similarity"]),
+        "",
+        "## Hidden Difference",
+        "",
+        str(comparison["hidden_difference"]),
+        "",
+        "## Conditional Verdict",
+        "",
+        str(comparison["conditional_verdict"]),
+        "",
+        "## Final Line",
+        "",
+        str(comparison["final_line"]),
+        "",
+    ]
+    return "\n".join(lines)
+
+
 def render_expansion_queue(
     comparisons: list[dict[str, object]],
     expansion_ready_ids: set[str],
@@ -342,6 +409,7 @@ def render_comparison(
             <h2>Audience Loop</h2>
             <p>Request a related comparison or record a signal from comments, saves, shares, or conversion behavior.</p>
             <div class="actions compact">
+              <a class="button secondary" href="{comparison_export_link(comparison["comparison_id"])}" download>Download markdown</a>
               <a class="button" href="{issue_url("comparison_request.yml", ["comparison-request"])}">Request related comparison</a>
               <a class="button secondary" href="{issue_url("audience_signal.yml", ["audience-signal"])}">Record signal</a>
             </div>
@@ -742,6 +810,22 @@ def write_expansion_pack_files(
     return written_paths
 
 
+def write_comparison_exports(
+    comparisons: list[dict[str, object]],
+    output_dir: Path,
+) -> list[Path]:
+    export_dir = output_dir / "exports"
+    export_dir.mkdir(parents=True, exist_ok=True)
+    written_paths: list[Path] = []
+
+    for comparison in comparisons:
+        path = export_dir / f"{comparison['comparison_id']}.md"
+        path.write_text(render_comparison_markdown(comparison), encoding="utf-8")
+        written_paths.append(path)
+
+    return written_paths
+
+
 def write_site(
     comparisons: list[dict[str, object]],
     output_dir: Path,
@@ -772,7 +856,9 @@ def write_site(
             encoding="utf-8",
         )
 
-    return write_expansion_pack_files(comparisons, expansion_ready_ids, output_dir)
+    expansion_paths = write_expansion_pack_files(comparisons, expansion_ready_ids, output_dir)
+    export_paths = write_comparison_exports(comparisons, output_dir)
+    return expansion_paths + export_paths
 
 
 def main() -> int:
@@ -794,7 +880,7 @@ def main() -> int:
     )
     print(
         f"Generated {len(comparisons)} comparison pages and "
-        f"{len(expansion_paths)} expansion pack files in {args.output_dir}"
+        f"{len(expansion_paths)} generated asset files in {args.output_dir}"
     )
     return 0
 
