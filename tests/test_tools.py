@@ -63,6 +63,18 @@ from issue_lifecycle import (  # noqa: E402
 )
 from promote_draft import find_placeholders, promoted_comparison  # noqa: E402
 from script_generator import generate_short_script  # noqa: E402
+from site_health import (  # noqa: E402
+    join_url,
+    planned_urls,
+    render_results,
+    validate_comparison_html,
+    validate_feed,
+    validate_home_html,
+    validate_library_json,
+    validate_markdown_export,
+    validate_robots,
+    validate_sitemap,
+)
 from signal_rollup import (  # noqa: E402
     SignalRow,
     build_rollup,
@@ -434,6 +446,56 @@ class SignalRollupTests(unittest.TestCase):
         self.assertIn("Audience Signal Rollup", report)
         self.assertIn("No audience signals recorded yet.", report)
         self.assertNotIn("| Rank |", report)
+
+
+class SiteHealthTests(unittest.TestCase):
+    def test_join_url_normalizes_slashes(self) -> None:
+        self.assertEqual(join_url("https://example.com/base/", "/feed.xml"), "https://example.com/base/feed.xml")
+        self.assertEqual(join_url("https://example.com/base", ""), "https://example.com/base/")
+        self.assertEqual(join_url("https://example.com/base", "a/b"), "https://example.com/base/a/b")
+
+    def test_planned_urls_include_core_and_sample_comparison_urls(self) -> None:
+        urls = planned_urls("https://example.com/base/", ["one", "two", "three", "four"])
+
+        self.assertIn("https://example.com/base/library.json", urls)
+        self.assertIn("https://example.com/base/comparisons/one.html", urls)
+        self.assertIn("https://example.com/base/exports/three.md", urls)
+        self.assertNotIn("https://example.com/base/comparisons/four.html", urls)
+
+    def test_validate_library_json_returns_sample_ids(self) -> None:
+        payload = json.dumps(
+            {
+                "schema": "the-real-difference-engine.library.v1",
+                "comparison_count": 1,
+                "comparisons": [{"comparison_id": "test_topic"}],
+            }
+        )
+
+        result, comparison_ids = validate_library_json("https://example.com/library.json", payload)
+
+        self.assertTrue(result.ok)
+        self.assertEqual(comparison_ids, ["test_topic"])
+        self.assertIn("library has 1 comparisons", result.detail)
+
+    def test_validate_html_and_static_artifacts(self) -> None:
+        home_html = render_home([VALID_COMPARISON])
+        comparison_html = render_comparison(VALID_COMPARISON)
+
+        self.assertTrue(validate_home_html("https://example.com/", home_html).ok)
+        self.assertTrue(validate_comparison_html("https://example.com/comparisons/test_topic.html", comparison_html).ok)
+        self.assertTrue(validate_feed("https://example.com/feed.xml", render_feed([VALID_COMPARISON])).ok)
+        self.assertTrue(validate_sitemap("https://example.com/sitemap.xml", render_sitemap([VALID_COMPARISON])).ok)
+        self.assertTrue(validate_robots("https://example.com/robots.txt", render_robots()).ok)
+        self.assertTrue(validate_markdown_export("https://example.com/exports/test_topic.md", render_comparison_markdown(VALID_COMPARISON)).ok)
+
+    def test_render_results_marks_failures(self) -> None:
+        result, _ = validate_library_json("https://example.com/library.json", "{}")
+
+        output = render_results([result])
+
+        self.assertIn("# Site Health Check", output)
+        self.assertIn("BROKEN https://example.com/library.json", output)
+        self.assertIn("unexpected library schema", output)
 
 
 class ExpansionDecisionTests(unittest.TestCase):

@@ -17,6 +17,16 @@ From repo root:
 python tools/check.py
 ```
 
+## Check deployed site health
+
+After Pages deploys:
+
+```bash
+python tools/site_health.py
+```
+
+This command performs network checks against the public site. It is intentionally separate from `tools/check.py`.
+
 ## Generate public comparison library
 
 ```bash
