@@ -175,6 +175,11 @@ class SiteGeneratorTests(unittest.TestCase):
         self.assertIn("comparisons/test_topic.html", html)
         self.assertIn("comparison_request.yml", html)
         self.assertIn("Alpha expands options. Beta chooses action.", html)
+        self.assertIn('id="comparison-search"', html)
+        self.assertIn('id="lens-filter"', html)
+        self.assertIn('data-lens="Decision quality"', html)
+        self.assertIn('data-search="alpha vs beta alpha beta decision quality', html)
+        self.assertIn("applyComparisonFilters", html)
 
     def test_render_home_shows_expansion_queue_when_ready(self) -> None:
         html = render_home([VALID_COMPARISON], {"test_topic"})

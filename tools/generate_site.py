@@ -53,6 +53,31 @@ def render_badge(value: object) -> str:
     return f'<span class="badge">{clean_text(value)}</span>'
 
 
+def card_search_text(comparison: dict[str, object]) -> str:
+    searchable_fields = [
+        "title",
+        "a",
+        "b",
+        "primary_lens",
+        "secondary_lens",
+        "context",
+        "final_line",
+        "hidden_similarity",
+        "hidden_difference",
+    ]
+    return " ".join(str(comparison.get(field, "")) for field in searchable_fields).lower()
+
+
+def render_lens_options(comparisons: list[dict[str, object]]) -> str:
+    lenses = sorted({str(comparison["primary_lens"]) for comparison in comparisons})
+    options = ['<option value="">All lenses</option>']
+    options.extend(
+        f'<option value="{clean_text(lens)}">{clean_text(lens)}</option>'
+        for lens in lenses
+    )
+    return "\n".join(options)
+
+
 def select_expansion_ready_ids(signal_path: Path) -> set[str]:
     rows = load_signal_rows(signal_path)
     return {
@@ -107,7 +132,11 @@ def render_home(
     expansion_ready_ids = expansion_ready_ids or set()
     cards = "\n".join(
         f"""
-        <article class="card">
+        <article
+          class="card comparison-card"
+          data-lens="{clean_text(comparison["primary_lens"])}"
+          data-search="{clean_text(card_search_text(comparison))}"
+        >
           <a href="comparisons/{clean_text(comparison["comparison_id"])}.html">
             <span class="eyebrow">{clean_text(comparison["primary_lens"])}</span>
             <h2>{clean_text(comparison["title"])}</h2>
@@ -135,14 +164,27 @@ def render_home(
           </div>
         </section>
         <section class="toolbar">
-          <strong>{len(comparisons)} comparisons</strong>
-          <span>No lens, no useful truth.</span>
+          <strong><span id="visible-count">{len(comparisons)}</span> comparisons</strong>
+          <div class="filters" aria-label="Comparison filters">
+            <label>
+              <span>Search</span>
+              <input id="comparison-search" type="search" placeholder="Title, topic, lens, final line">
+            </label>
+            <label>
+              <span>Lens</span>
+              <select id="lens-filter">
+                {render_lens_options(comparisons)}
+              </select>
+            </label>
+          </div>
         </section>
-        <section class="grid">
+        <section class="grid" id="comparison-grid">
           {cards}
         </section>
+        <p class="empty-state" id="empty-state" hidden>No comparisons match the current filters.</p>
         {render_expansion_queue(comparisons, expansion_ready_ids)}
         """,
+        extra_script=render_filter_script(),
     )
 
 
@@ -251,7 +293,7 @@ def render_comparison(
     )
 
 
-def render_page(title: str, body: str) -> str:
+def render_page(title: str, body: str, extra_script: str = "") -> str:
     return f"""<!doctype html>
 <html lang="en">
 <head>
@@ -264,9 +306,44 @@ def render_page(title: str, body: str) -> str:
   <main>
     {body}
   </main>
+  {extra_script}
 </body>
 </html>
 """
+
+
+def render_filter_script() -> str:
+    return """
+<script>
+const comparisonSearch = document.getElementById("comparison-search");
+const lensFilter = document.getElementById("lens-filter");
+const comparisonCards = Array.from(document.querySelectorAll(".comparison-card"));
+const visibleCount = document.getElementById("visible-count");
+const emptyState = document.getElementById("empty-state");
+
+function applyComparisonFilters() {
+  const query = comparisonSearch.value.trim().toLowerCase();
+  const selectedLens = lensFilter.value;
+  let shownCount = 0;
+
+  comparisonCards.forEach((card) => {
+    const matchesQuery = !query || card.dataset.search.includes(query);
+    const matchesLens = !selectedLens || card.dataset.lens === selectedLens;
+    const shouldShow = matchesQuery && matchesLens;
+    card.hidden = !shouldShow;
+    if (shouldShow) {
+      shownCount += 1;
+    }
+  });
+
+  visibleCount.textContent = String(shownCount);
+  emptyState.hidden = shownCount !== 0;
+}
+
+comparisonSearch.addEventListener("input", applyComparisonFilters);
+lensFilter.addEventListener("change", applyComparisonFilters);
+</script>
+""".strip()
 
 
 def render_styles() -> str:
@@ -361,7 +438,46 @@ section {
   display: flex;
   justify-content: space-between;
   gap: 16px;
+  align-items: flex-end;
   padding: 16px 0;
+  color: var(--muted);
+}
+
+.filters {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+.filters label {
+  display: grid;
+  gap: 4px;
+  min-width: 190px;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.filters input,
+.filters select {
+  min-height: 40px;
+  width: 100%;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: var(--panel);
+  color: var(--ink);
+  font: inherit;
+  font-size: 14px;
+  padding: 8px 10px;
+}
+
+.empty-state {
+  margin-top: 18px;
+  padding: 18px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--panel);
   color: var(--muted);
 }
 
@@ -496,6 +612,11 @@ section {
   .toolbar,
   .two-column {
     display: block;
+  }
+
+  .filters {
+    justify-content: stretch;
+    margin-top: 14px;
   }
 
   .two-column > div + div {
