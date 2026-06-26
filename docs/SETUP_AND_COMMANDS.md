@@ -52,6 +52,20 @@ reports/signal_rollup.md
 reports/expansion_decisions.md
 ```
 
+## Ingest approved comparison requests
+
+Approved GitHub issues with labels `comparison-request` and `approved` can be converted into draft JSON:
+
+```bash
+python tools/issue_request_ingest.py
+```
+
+Output:
+
+```text
+drafts/comparison_requests/
+```
+
 ## Validate comparison JSON files
 
 From repo root:
@@ -75,7 +89,7 @@ generated/
   newsletters/
 ```
 
-The `generated/`, `site/`, and `reports/` directories are ignored by Git because they can be rebuilt from source data.
+The `generated/`, `site/`, `reports/`, and `drafts/` directories are ignored by Git because they can be rebuilt from source data or GitHub issues.
 
 ## Run unit tests
 

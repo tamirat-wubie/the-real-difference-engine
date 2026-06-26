@@ -9,6 +9,7 @@ venv/
 generated/
 site/
 reports/
+drafts/
 dist/
 build/
 

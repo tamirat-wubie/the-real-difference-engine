@@ -56,6 +56,7 @@ GitHub Pages deploys the generated `site/` output from the `main` branch.
 Public requests and audience signals are collected through GitHub issue forms. Local signal data can be summarized with:
 
 ```bash
+python tools/issue_request_ingest.py
 python tools/signal_rollup.py
 python tools/expansion_decision.py
 ```

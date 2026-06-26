@@ -19,6 +19,13 @@ from expansion_decision import (  # noqa: E402
 )
 from final_line_builder import rank_final_lines  # noqa: E402
 from generate_site import render_comparison, render_home  # noqa: E402
+from issue_request_ingest import (  # noqa: E402
+    IssueRequest,
+    build_draft_comparison,
+    is_approved_request,
+    parse_issue_form_body,
+    slugify,
+)
 from script_generator import generate_short_script  # noqa: E402
 from signal_rollup import SignalRow, build_rollup, render_rollup, score_signal  # noqa: E402
 from topic_scorer import TopicScoreInput, score_topic  # noqa: E402
@@ -212,6 +219,66 @@ class ExpansionDecisionTests(unittest.TestCase):
         self.assertIn("Expansion Decisions", report)
         self.assertIn("No audience signals recorded yet.", report)
         self.assertNotIn("| Comparison |", report)
+
+
+class IssueRequestIngestTests(unittest.TestCase):
+    def test_parse_issue_form_body_extracts_expected_fields(self) -> None:
+        body = """### A
+Money
+
+### B
+Time
+
+### Lens
+Life control
+
+### Context
+Personal decision-making
+
+### Risk level
+medium
+"""
+
+        fields = parse_issue_form_body(body)
+
+        self.assertEqual(fields["a"], "Money")
+        self.assertEqual(fields["b"], "Time")
+        self.assertEqual(fields["lens"], "Life control")
+        self.assertEqual(fields["risk level"], "medium")
+
+    def test_build_draft_comparison_from_approved_issue(self) -> None:
+        issue = IssueRequest(
+            number=42,
+            title="[comparison request] Money vs Time",
+            url="https://github.com/example/repo/issues/42",
+            labels=("comparison-request", "approved"),
+            body="""### A
+Money
+
+### B
+Time
+
+### Lens
+Life control
+
+### Context
+Personal decision-making
+
+### Risk level
+medium
+""",
+        )
+
+        draft = build_draft_comparison(issue)
+
+        self.assertTrue(is_approved_request(issue))
+        self.assertEqual(draft["comparison_id"], "money_vs_time_life_control")
+        self.assertEqual(draft["source_requirements"], "citations_recommended")
+        self.assertEqual(draft["pipeline_status"], "drafted")
+
+    def test_slugify_rejects_empty_values(self) -> None:
+        with self.assertRaises(ValueError):
+            slugify("!!!")
 
 
 if __name__ == "__main__":

@@ -9,6 +9,23 @@ Use GitHub issue forms for public signals:
 - comparison requests
 - audience signals from published content
 
+Approved comparison requests must have both labels:
+
+- `comparison-request`
+- `approved`
+
+Convert approved requests into draft JSON:
+
+```bash
+python tools/issue_request_ingest.py
+```
+
+Draft output:
+
+```text
+drafts/comparison_requests/
+```
+
 ## Signal Types
 
 Supported `signal_type` values:
