@@ -19,6 +19,7 @@ DEFAULT_DATA_DIR = ROOT / "data" / "comparisons"
 DEFAULT_OUTPUT_DIR = ROOT / "site"
 DEFAULT_SIGNAL_PATH = ROOT / "data" / "signals" / "audience_signals.csv"
 REPOSITORY_URL = "https://github.com/tamirat-wubie/the-real-difference-engine"
+PUBLIC_SITE_URL = "https://tamirat-wubie.github.io/the-real-difference-engine/"
 
 
 def issue_url(template: str, labels: list[str] | None = None) -> str:
@@ -99,6 +100,10 @@ def expansion_pack_link(comparison_id: object, filename: str) -> str:
 
 def comparison_export_link(comparison_id: object) -> str:
     return f"../exports/{clean_text(comparison_id)}.md"
+
+
+def absolute_site_url(path: str = "") -> str:
+    return PUBLIC_SITE_URL + path.lstrip("/")
 
 
 def render_comparison_markdown(comparison: dict[str, object]) -> str:
@@ -211,6 +216,41 @@ def build_library_index(
         "comparison_count": len(records),
         "comparisons": records,
     }
+
+
+def build_sitemap_urls(comparisons: list[dict[str, object]]) -> list[str]:
+    urls = [
+        absolute_site_url(),
+        absolute_site_url("library.json"),
+    ]
+    for comparison in comparisons:
+        comparison_id = str(comparison["comparison_id"])
+        urls.append(absolute_site_url(f"comparisons/{comparison_id}.html"))
+        urls.append(absolute_site_url(f"exports/{comparison_id}.md"))
+    return urls
+
+
+def render_sitemap(comparisons: list[dict[str, object]]) -> str:
+    url_entries = "\n".join(
+        "  <url>\n"
+        f"    <loc>{clean_text(url)}</loc>\n"
+        "  </url>"
+        for url in build_sitemap_urls(comparisons)
+    )
+    return (
+        '<?xml version="1.0" encoding="UTF-8"?>\n'
+        '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n'
+        f"{url_entries}\n"
+        "</urlset>\n"
+    )
+
+
+def render_robots() -> str:
+    return (
+        "User-agent: *\n"
+        "Allow: /\n"
+        f"Sitemap: {absolute_site_url('sitemap.xml')}\n"
+    )
 
 
 def render_expansion_queue(
@@ -894,6 +934,18 @@ def write_library_index(
     return path
 
 
+def write_discovery_files(
+    comparisons: list[dict[str, object]],
+    output_dir: Path,
+) -> list[Path]:
+    output_dir.mkdir(parents=True, exist_ok=True)
+    sitemap_path = output_dir / "sitemap.xml"
+    robots_path = output_dir / "robots.txt"
+    sitemap_path.write_text(render_sitemap(comparisons), encoding="utf-8")
+    robots_path.write_text(render_robots(), encoding="utf-8")
+    return [sitemap_path, robots_path]
+
+
 def write_site(
     comparisons: list[dict[str, object]],
     output_dir: Path,
@@ -927,7 +979,8 @@ def write_site(
     expansion_paths = write_expansion_pack_files(comparisons, expansion_ready_ids, output_dir)
     export_paths = write_comparison_exports(comparisons, output_dir)
     library_path = write_library_index(comparisons, signal_decisions, output_dir)
-    return expansion_paths + export_paths + [library_path]
+    discovery_paths = write_discovery_files(comparisons, output_dir)
+    return expansion_paths + export_paths + [library_path] + discovery_paths
 
 
 def main() -> int:

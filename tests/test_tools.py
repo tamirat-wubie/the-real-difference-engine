@@ -31,10 +31,13 @@ from generate_site import (  # noqa: E402
     render_comparison,
     render_comparison_markdown,
     render_home,
+    render_robots,
     render_signal_report,
+    render_sitemap,
 )
 from generate_site import (  # noqa: E402
     write_comparison_exports,
+    write_discovery_files,
     write_expansion_pack_files,
     write_library_index,
 )
@@ -303,6 +306,33 @@ class SiteGeneratorTests(unittest.TestCase):
             self.assertTrue(path.exists())
             self.assertIn('"schema": "the-real-difference-engine.library.v1"', payload)
             self.assertIn('"comparison_id": "test_topic"', payload)
+        finally:
+            if output_dir.exists():
+                shutil.rmtree(output_dir)
+
+    def test_render_sitemap_includes_library_pages_and_exports(self) -> None:
+        sitemap = render_sitemap([VALID_COMPARISON])
+
+        self.assertIn("https://tamirat-wubie.github.io/the-real-difference-engine/", sitemap)
+        self.assertIn("library.json", sitemap)
+        self.assertIn("comparisons/test_topic.html", sitemap)
+        self.assertIn("exports/test_topic.md", sitemap)
+
+    def test_render_robots_points_to_sitemap(self) -> None:
+        robots = render_robots()
+
+        self.assertIn("User-agent: *", robots)
+        self.assertIn("Allow: /", robots)
+        self.assertIn("Sitemap: https://tamirat-wubie.github.io/the-real-difference-engine/sitemap.xml", robots)
+
+    def test_write_discovery_files_writes_sitemap_and_robots(self) -> None:
+        output_dir = ROOT / "site_discovery_test_output"
+        try:
+            written_paths = write_discovery_files([VALID_COMPARISON], output_dir)
+
+            self.assertEqual(len(written_paths), 2)
+            self.assertTrue((output_dir / "sitemap.xml").exists())
+            self.assertTrue((output_dir / "robots.txt").exists())
         finally:
             if output_dir.exists():
                 shutil.rmtree(output_dir)
