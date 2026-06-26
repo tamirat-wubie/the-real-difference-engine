@@ -23,6 +23,7 @@ def main() -> int:
         [sys.executable, "tools/generate_site.py"],
         [sys.executable, "tools/signal_rollup.py"],
         [sys.executable, "tools/expansion_decision.py"],
+        [sys.executable, "tools/expansion_pack.py"],
         [sys.executable, "tools/validate_runbook.py"],
     ]
 

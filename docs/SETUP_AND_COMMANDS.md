@@ -37,6 +37,7 @@ site/
 ```bash
 python tools/signal_rollup.py
 python tools/expansion_decision.py
+python tools/expansion_pack.py
 ```
 
 Input:
@@ -50,6 +51,7 @@ Output:
 ```text
 reports/signal_rollup.md
 reports/expansion_decisions.md
+expansion_packs/
 ```
 
 ## Ingest approved comparison requests
@@ -125,7 +127,7 @@ generated/
   newsletters/
 ```
 
-The `generated/`, `site/`, `reports/`, and `drafts/` directories are ignored by Git because they can be rebuilt from source data or GitHub issues.
+The `generated/`, `site/`, `reports/`, `drafts/`, and `expansion_packs/` directories are ignored by Git because they can be rebuilt from source data or GitHub issues.
 
 ## Run unit tests
 

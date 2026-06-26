@@ -17,6 +17,12 @@ from expansion_decision import (  # noqa: E402
     classify_expansion,
     render_expansion_decisions,
 )
+from expansion_pack import (  # noqa: E402
+    generate_custom_report_sample,
+    generate_lead_magnet_outline,
+    generate_pack,
+    select_expansion_ids,
+)
 from final_line_builder import rank_final_lines  # noqa: E402
 from generate_site import render_comparison, render_home  # noqa: E402
 from issue_request_ingest import (  # noqa: E402
@@ -230,6 +236,30 @@ class ExpansionDecisionTests(unittest.TestCase):
         self.assertIn("Expansion Decisions", report)
         self.assertIn("No audience signals recorded yet.", report)
         self.assertNotIn("| Comparison |", report)
+
+
+class ExpansionPackTests(unittest.TestCase):
+    def test_generate_pack_contains_required_assets(self) -> None:
+        pack = generate_pack(VALID_COMPARISON)
+
+        self.assertIn("long_video_outline.md", pack)
+        self.assertIn("newsletter.md", pack)
+        self.assertIn("custom_report_sample.md", pack)
+        self.assertIn("lead_magnet_outline.md", pack)
+
+    def test_custom_report_sample_uses_evidence_boundary(self) -> None:
+        report = generate_custom_report_sample(VALID_COMPARISON)
+
+        self.assertIn("Risk level: low", report)
+        self.assertIn("Source requirement: conceptual_only", report)
+        self.assertIn("Alpha expands options. Beta chooses action.", report)
+
+    def test_lead_magnet_outline_has_conversion_prompt(self) -> None:
+        outline = generate_lead_magnet_outline(VALID_COMPARISON)
+
+        self.assertIn("Conversion Prompt", outline)
+        self.assertIn("Request a custom comparison report.", outline)
+        self.assertIn("Alpha expands options. Beta chooses action.", outline)
 
 
 class IssueRequestIngestTests(unittest.TestCase):

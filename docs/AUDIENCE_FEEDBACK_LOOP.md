@@ -118,3 +118,21 @@ Expand comparisons with high weighted signal scores into:
 2. newsletter
 3. custom report sample
 4. product page or lead magnet
+
+Generate expansion packs:
+
+```bash
+python tools/expansion_pack.py
+```
+
+Generate a specific pack:
+
+```bash
+python tools/expansion_pack.py --comparison-id discipline_vs_motivation_behavior_continuity
+```
+
+Output:
+
+```text
+expansion_packs/
+```
