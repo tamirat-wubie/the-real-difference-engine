@@ -28,6 +28,7 @@ Output goes to:
 ```text
 site/
   index.html
+  library.json
   assets/styles.css
   comparisons/*.html
   exports/*.md
@@ -44,6 +45,8 @@ When the signal file has rows, the generated home page also publishes an audienc
 The generated home page also includes static browser-side search and primary lens filtering. No server process is required after the site files are built.
 
 Each comparison detail page links to a generated markdown export under `site/exports/`.
+
+Machine-readable integrations can read `site/library.json` for comparison metadata, page URLs, markdown export URLs, and signal decision state when signal rows exist.
 
 ## Generate audience signal rollup
 

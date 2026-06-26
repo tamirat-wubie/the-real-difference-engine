@@ -164,6 +164,55 @@ def render_comparison_markdown(comparison: dict[str, object]) -> str:
     return "\n".join(lines)
 
 
+def build_library_index(
+    comparisons: list[dict[str, object]],
+    signal_decisions: list[ExpansionDecision] | None = None,
+) -> dict[str, object]:
+    decision_by_id = {
+        decision.comparison_id: decision
+        for decision in signal_decisions or []
+    }
+    records: list[dict[str, object]] = []
+
+    for comparison in comparisons:
+        comparison_id = str(comparison["comparison_id"])
+        decision = decision_by_id.get(comparison_id)
+        signal_state: dict[str, object] | None = None
+        if decision is not None:
+            signal_state = {
+                "decision": decision.decision,
+                "score": decision.score,
+                "signal_count": decision.signal_count,
+                "rationale": decision.rationale,
+            }
+
+        records.append(
+            {
+                "comparison_id": comparison_id,
+                "title": comparison["title"],
+                "a": comparison["a"],
+                "b": comparison["b"],
+                "primary_lens": comparison["primary_lens"],
+                "secondary_lens": comparison["secondary_lens"],
+                "final_line": comparison["final_line"],
+                "risk_level": comparison["risk_level"],
+                "evidence_tier": comparison["evidence_tier"],
+                "source_requirements": comparison["source_requirements"],
+                "pipeline_status": comparison["pipeline_status"],
+                "content_formats": comparison.get("content_formats", []),
+                "page_url": f"comparisons/{comparison_id}.html",
+                "markdown_url": f"exports/{comparison_id}.md",
+                "signal_state": signal_state,
+            }
+        )
+
+    return {
+        "schema": "the-real-difference-engine.library.v1",
+        "comparison_count": len(records),
+        "comparisons": records,
+    }
+
+
 def render_expansion_queue(
     comparisons: list[dict[str, object]],
     expansion_ready_ids: set[str],
@@ -826,6 +875,25 @@ def write_comparison_exports(
     return written_paths
 
 
+def write_library_index(
+    comparisons: list[dict[str, object]],
+    signal_decisions: list[ExpansionDecision],
+    output_dir: Path,
+) -> Path:
+    output_dir.mkdir(parents=True, exist_ok=True)
+    path = output_dir / "library.json"
+    path.write_text(
+        json.dumps(
+            build_library_index(comparisons, signal_decisions),
+            ensure_ascii=True,
+            indent=2,
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+    return path
+
+
 def write_site(
     comparisons: list[dict[str, object]],
     output_dir: Path,
@@ -858,7 +926,8 @@ def write_site(
 
     expansion_paths = write_expansion_pack_files(comparisons, expansion_ready_ids, output_dir)
     export_paths = write_comparison_exports(comparisons, output_dir)
-    return expansion_paths + export_paths
+    library_path = write_library_index(comparisons, signal_decisions, output_dir)
+    return expansion_paths + export_paths + [library_path]
 
 
 def main() -> int:

@@ -27,12 +27,17 @@ from expansion_pack import (  # noqa: E402
 )
 from final_line_builder import rank_final_lines  # noqa: E402
 from generate_site import (  # noqa: E402
+    build_library_index,
     render_comparison,
     render_comparison_markdown,
     render_home,
     render_signal_report,
 )
-from generate_site import write_comparison_exports, write_expansion_pack_files  # noqa: E402
+from generate_site import (  # noqa: E402
+    write_comparison_exports,
+    write_expansion_pack_files,
+    write_library_index,
+)
 from issue_request_ingest import (  # noqa: E402
     IssueRequest,
     build_draft_comparison,
@@ -265,6 +270,39 @@ class SiteGeneratorTests(unittest.TestCase):
             self.assertEqual(len(written_paths), 1)
             self.assertTrue((output_dir / "exports" / "test_topic.md").exists())
             self.assertIn("Alpha vs Beta", written_paths[0].read_text(encoding="utf-8"))
+        finally:
+            if output_dir.exists():
+                shutil.rmtree(output_dir)
+
+    def test_build_library_index_includes_urls_and_signal_state(self) -> None:
+        decisions = build_expansion_decisions(
+            [
+                SignalRow("test_topic", "shorts", "share", 30, ""),
+                SignalRow("test_topic", "shorts", "comment", 2, ""),
+                SignalRow("test_topic", "shorts", "request", 1, ""),
+                SignalRow("test_topic", "shorts", "save", 1, ""),
+                SignalRow("test_topic", "shorts", "conversion", 1, ""),
+            ]
+        )
+
+        index = build_library_index([VALID_COMPARISON], decisions)
+        record = index["comparisons"][0]
+
+        self.assertEqual(index["schema"], "the-real-difference-engine.library.v1")
+        self.assertEqual(index["comparison_count"], 1)
+        self.assertEqual(record["page_url"], "comparisons/test_topic.html")
+        self.assertEqual(record["markdown_url"], "exports/test_topic.md")
+        self.assertEqual(record["signal_state"]["decision"], "expand")
+
+    def test_write_library_index_writes_machine_readable_json(self) -> None:
+        output_dir = ROOT / "site_library_test_output"
+        try:
+            path = write_library_index([VALID_COMPARISON], [], output_dir)
+            payload = path.read_text(encoding="utf-8")
+
+            self.assertTrue(path.exists())
+            self.assertIn('"schema": "the-real-difference-engine.library.v1"', payload)
+            self.assertIn('"comparison_id": "test_topic"', payload)
         finally:
             if output_dir.exists():
                 shutil.rmtree(output_dir)
