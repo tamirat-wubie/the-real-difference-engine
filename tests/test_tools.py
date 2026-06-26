@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 import sys
 import shutil
 import tempfile
@@ -28,6 +29,8 @@ from expansion_pack import (  # noqa: E402
 from final_line_builder import rank_final_lines  # noqa: E402
 from generate_site import (  # noqa: E402
     build_library_index,
+    comparison_json_ld,
+    home_json_ld,
     render_comparison,
     render_comparison_markdown,
     render_feed,
@@ -181,6 +184,13 @@ class ScriptGeneratorTests(unittest.TestCase):
         self.assertIn("Alpha expands options. Beta chooses action.", script)
 
 
+def extract_json_ld(html: str) -> dict[str, object]:
+    marker = '<script type="application/ld+json">'
+    start = html.index(marker) + len(marker)
+    end = html.index("</script>", start)
+    return json.loads(html[start:end])
+
+
 class SiteGeneratorTests(unittest.TestCase):
     def test_render_home_links_comparison_pages(self) -> None:
         html = render_home([VALID_COMPARISON])
@@ -194,6 +204,7 @@ class SiteGeneratorTests(unittest.TestCase):
         self.assertIn('property="og:url" content="https://tamirat-wubie.github.io/the-real-difference-engine/"', html)
         self.assertIn('name="twitter:card" content="summary"', html)
         self.assertIn('rel="canonical" href="https://tamirat-wubie.github.io/the-real-difference-engine/"', html)
+        self.assertIn('type="application/ld+json"', html)
         self.assertIn('type="application/rss+xml"', html)
         self.assertIn("https://tamirat-wubie.github.io/the-real-difference-engine/feed.xml", html)
         self.assertIn('id="comparison-search"', html)
@@ -201,6 +212,11 @@ class SiteGeneratorTests(unittest.TestCase):
         self.assertIn('data-lens="Decision quality"', html)
         self.assertIn('data-search="alpha vs beta alpha beta decision quality', html)
         self.assertIn("applyComparisonFilters", html)
+
+        structured_data = extract_json_ld(html)
+        self.assertEqual(structured_data["@type"], "CollectionPage")
+        self.assertEqual(structured_data["name"], "The Real Difference Engine")
+        self.assertEqual(len(structured_data["hasPart"]), 1)
 
     def test_render_home_shows_expansion_queue_when_ready(self) -> None:
         html = render_home([VALID_COMPARISON], {"test_topic"})
@@ -243,6 +259,7 @@ class SiteGeneratorTests(unittest.TestCase):
         self.assertIn("Alpha &lt; Beta", html)
         self.assertIn("Alpha &lt;script&gt; Beta", html)
         self.assertIn('content="Alpha &lt;script&gt; Beta"', html)
+        self.assertIn("Alpha \\u003cscript\\u003e Beta", html)
         self.assertNotIn("<script>", html)
 
     def test_render_comparison_links_expansion_pack_when_ready(self) -> None:
@@ -252,11 +269,26 @@ class SiteGeneratorTests(unittest.TestCase):
         self.assertIn('property="og:description" content="Alpha expands options. Beta chooses action."', html)
         self.assertIn('property="og:url" content="https://tamirat-wubie.github.io/the-real-difference-engine/comparisons/test_topic.html"', html)
         self.assertIn('rel="canonical" href="https://tamirat-wubie.github.io/the-real-difference-engine/comparisons/test_topic.html"', html)
+        self.assertIn('type="application/ld+json"', html)
         self.assertIn("Expansion Pack", html)
         self.assertIn("../expansion_packs/test_topic/custom_report_sample.md", html)
         self.assertIn("Lead magnet outline", html)
         self.assertIn("../exports/test_topic.md", html)
         self.assertIn("Download markdown", html)
+
+        structured_data = extract_json_ld(html)
+        self.assertEqual(structured_data["@type"], "CreativeWork")
+        self.assertEqual(structured_data["identifier"], "test_topic")
+        self.assertEqual(structured_data["encoding"]["encodingFormat"], "text/markdown")
+
+    def test_json_ld_builders_emit_expected_schema_types(self) -> None:
+        home_schema = home_json_ld([VALID_COMPARISON])
+        comparison_schema = comparison_json_ld(VALID_COMPARISON)
+
+        self.assertEqual(home_schema["@context"], "https://schema.org")
+        self.assertEqual(home_schema["@type"], "CollectionPage")
+        self.assertEqual(comparison_schema["@type"], "CreativeWork")
+        self.assertIn("exports/test_topic.md", comparison_schema["encoding"]["contentUrl"])
 
     def test_render_comparison_markdown_exports_core_fields(self) -> None:
         markdown = render_comparison_markdown(VALID_COMPARISON)

@@ -54,6 +54,62 @@ def clean_text(value: object) -> str:
     return html.escape(str(value).strip(), quote=True)
 
 
+def render_json_ld(payload: dict[str, object]) -> str:
+    serialized_payload = json.dumps(payload, ensure_ascii=True, separators=(",", ":"))
+    safe_payload = (
+        serialized_payload.replace("&", "\\u0026")
+        .replace("<", "\\u003c")
+        .replace(">", "\\u003e")
+    )
+    return (
+        '<script type="application/ld+json">'
+        f"{safe_payload}"
+        "</script>"
+    )
+
+
+def home_json_ld(comparisons: list[dict[str, object]]) -> dict[str, object]:
+    return {
+        "@context": "https://schema.org",
+        "@type": "CollectionPage",
+        "name": "The Real Difference Engine",
+        "description": DEFAULT_SITE_DESCRIPTION,
+        "url": absolute_site_url(),
+        "hasPart": [
+            {
+                "@type": "CreativeWork",
+                "name": comparison["title"],
+                "url": absolute_site_url(f"comparisons/{comparison['comparison_id']}.html"),
+            }
+            for comparison in comparisons
+        ],
+    }
+
+
+def comparison_json_ld(comparison: dict[str, object]) -> dict[str, object]:
+    comparison_id = str(comparison["comparison_id"])
+    return {
+        "@context": "https://schema.org",
+        "@type": "CreativeWork",
+        "name": comparison["title"],
+        "description": comparison["final_line"],
+        "url": absolute_site_url(f"comparisons/{comparison_id}.html"),
+        "identifier": comparison_id,
+        "about": [
+            str(comparison["a"]),
+            str(comparison["b"]),
+            str(comparison["primary_lens"]),
+            str(comparison["secondary_lens"]),
+        ],
+        "text": comparison["conditional_verdict"],
+        "encoding": {
+            "@type": "MediaObject",
+            "encodingFormat": "text/markdown",
+            "contentUrl": absolute_site_url(f"exports/{comparison_id}.md"),
+        },
+    }
+
+
 def render_badge(value: object) -> str:
     return f'<span class="badge">{clean_text(value)}</span>'
 
@@ -400,6 +456,7 @@ def render_home(
         title="The Real Difference Engine",
         description=DEFAULT_SITE_DESCRIPTION,
         canonical_path="",
+        json_ld=home_json_ld(comparisons),
         body=f"""
         <section class="hero">
           <p class="eyebrow">Public comparison library</p>
@@ -475,6 +532,7 @@ def render_comparison(
         title=str(comparison["title"]),
         description=str(comparison["final_line"]),
         canonical_path=f"comparisons/{comparison['comparison_id']}.html",
+        json_ld=comparison_json_ld(comparison),
         body=f"""
         <nav class="back"><a href="../index.html">Back to library</a></nav>
         <article class="detail">
@@ -549,9 +607,11 @@ def render_page(
     body: str,
     description: str = DEFAULT_SITE_DESCRIPTION,
     canonical_path: str = "",
+    json_ld: dict[str, object] | None = None,
     extra_script: str = "",
 ) -> str:
     canonical_url = absolute_site_url(canonical_path)
+    structured_data = render_json_ld(json_ld) if json_ld else ""
     return f"""<!doctype html>
 <html lang="en">
 <head>
@@ -570,6 +630,7 @@ def render_page(
   <meta name="twitter:description" content="{clean_text(description)}">
   <link rel="alternate" type="application/rss+xml" title="The Real Difference Engine feed" href="{absolute_site_url('feed.xml')}">
   <link rel="stylesheet" href="{'../' if title != 'The Real Difference Engine' else ''}assets/styles.css">
+  {structured_data}
 </head>
 <body>
   <main>

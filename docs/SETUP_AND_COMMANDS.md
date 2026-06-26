@@ -57,6 +57,8 @@ Feed readers can subscribe to `site/feed.xml`.
 
 Generated HTML pages include canonical URLs, meta descriptions, Open Graph tags, Twitter summary tags, and RSS discovery metadata.
 
+Generated HTML pages also include JSON-LD structured data: the home page is a `CollectionPage`, and each comparison page is a `CreativeWork` with its markdown export attached as an encoding.
+
 ## Generate audience signal rollup
 
 ```bash
