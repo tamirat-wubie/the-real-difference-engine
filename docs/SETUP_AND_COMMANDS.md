@@ -48,6 +48,7 @@ site/
   changelog.md
   roadmap.html
   roadmap.md
+  status.json
   feed.xml
   library.json
   robots.txt
@@ -72,6 +73,8 @@ Each comparison detail page links to a generated markdown export under `site/exp
 The generator also publishes a root changelog page and markdown export from recent Git history. GitHub Pages checks out full history so deployed changelogs can include recent platform updates.
 
 The generator also publishes a root roadmap page and markdown export from `data/platform_roadmap.json`.
+
+The generator also publishes `site/status.json` for integrations that need comparison count, roadmap status, release trace, and endpoint references without scraping HTML.
 
 Machine-readable integrations can read `site/library.json` for comparison metadata, page URLs, markdown export URLs, and signal decision state when signal rows exist.
 

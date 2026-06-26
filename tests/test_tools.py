@@ -29,6 +29,7 @@ from expansion_pack import (  # noqa: E402
 from final_line_builder import rank_final_lines  # noqa: E402
 from generate_site import (  # noqa: E402
     build_library_index,
+    build_status_payload,
     comparison_json_ld,
     home_json_ld,
     load_roadmap,
@@ -51,6 +52,7 @@ from generate_site import (  # noqa: E402
     write_expansion_pack_files,
     write_library_index,
     write_roadmap_files,
+    write_status_file,
 )
 from issue_request_ingest import (  # noqa: E402
     IssueRequest,
@@ -85,6 +87,7 @@ from site_health import (  # noqa: E402
     validate_roadmap_markdown,
     validate_robots,
     validate_sitemap,
+    validate_status_json,
 )
 from signal_rollup import (  # noqa: E402
     SignalRow,
@@ -448,6 +451,39 @@ class SiteGeneratorTests(unittest.TestCase):
         self.assertEqual(record["markdown_url"], "exports/test_topic.md")
         self.assertEqual(record["signal_state"]["decision"], "expand")
 
+    def test_build_status_payload_summarizes_public_platform_state(self) -> None:
+        decisions = build_expansion_decisions(
+            [SignalRow("test_topic", "shorts", "share", 30, "")]
+        )
+        commits = [{"hash": "abc1234", "message": "feat: publish status endpoint"}]
+
+        payload = build_status_payload([VALID_COMPARISON], VALID_ROADMAP, decisions, commits)
+
+        self.assertEqual(payload["schema"], "the-real-difference-engine.status.v1")
+        self.assertEqual(payload["comparison_count"], 1)
+        self.assertEqual(payload["roadmap"]["status_counts"]["shipped"], 1)
+        self.assertEqual(payload["release_trace"]["latest_commit"]["hash"], "abc1234")
+        self.assertEqual(payload["endpoints"]["status"], "status.json")
+
+    def test_write_status_file_writes_machine_readable_status(self) -> None:
+        output_dir = ROOT / "site_status_test_output"
+        try:
+            path = write_status_file(
+                [VALID_COMPARISON],
+                VALID_ROADMAP,
+                [],
+                [{"hash": "abc1234", "message": "feat: publish status endpoint"}],
+                output_dir,
+            )
+            payload = json.loads(path.read_text(encoding="utf-8"))
+
+            self.assertTrue(path.exists())
+            self.assertEqual(payload["schema"], "the-real-difference-engine.status.v1")
+            self.assertEqual(payload["endpoints"]["library"], "library.json")
+        finally:
+            if output_dir.exists():
+                shutil.rmtree(output_dir)
+
     def test_write_library_index_writes_machine_readable_json(self) -> None:
         output_dir = ROOT / "site_library_test_output"
         try:
@@ -465,6 +501,7 @@ class SiteGeneratorTests(unittest.TestCase):
         sitemap = render_sitemap([VALID_COMPARISON])
 
         self.assertIn("https://tamirat-wubie.github.io/the-real-difference-engine/", sitemap)
+        self.assertIn("status.json", sitemap)
         self.assertIn("library.json", sitemap)
         self.assertIn("feed.xml", sitemap)
         self.assertIn("changelog.html", sitemap)
@@ -556,6 +593,7 @@ class SiteHealthTests(unittest.TestCase):
         urls = planned_urls("https://example.com/base/", ["one", "two", "three", "four"])
 
         self.assertIn("https://example.com/base/library.json", urls)
+        self.assertIn("https://example.com/base/status.json", urls)
         self.assertIn("https://example.com/base/changelog.html", urls)
         self.assertIn("https://example.com/base/changelog.md", urls)
         self.assertIn("https://example.com/base/roadmap.html", urls)
@@ -588,6 +626,12 @@ class SiteHealthTests(unittest.TestCase):
         self.assertTrue(validate_feed("https://example.com/feed.xml", render_feed([VALID_COMPARISON])).ok)
         self.assertTrue(validate_sitemap("https://example.com/sitemap.xml", render_sitemap([VALID_COMPARISON])).ok)
         self.assertTrue(validate_robots("https://example.com/robots.txt", render_robots()).ok)
+        self.assertTrue(
+            validate_status_json(
+                "https://example.com/status.json",
+                json.dumps(build_status_payload([VALID_COMPARISON], VALID_ROADMAP)),
+            ).ok
+        )
         self.assertTrue(validate_changelog_html("https://example.com/changelog.html", render_changelog_html([])).ok)
         self.assertTrue(validate_changelog_markdown("https://example.com/changelog.md", render_changelog_markdown([])).ok)
         self.assertTrue(validate_roadmap_html("https://example.com/roadmap.html", render_roadmap_html(VALID_ROADMAP)).ok)

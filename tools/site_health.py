@@ -57,6 +57,7 @@ def join_url(base_url: str, path: str = "") -> str:
 def planned_urls(base_url: str, comparison_ids: list[str]) -> list[str]:
     urls = [
         join_url(base_url),
+        join_url(base_url, "status.json"),
         join_url(base_url, "changelog.html"),
         join_url(base_url, "changelog.md"),
         join_url(base_url, "roadmap.html"),
@@ -112,6 +113,21 @@ def validate_library_json(url: str, text: str) -> tuple[HealthResult, list[str]]
         return HealthResult(url, False, "library has no comparisons"), []
     comparison_ids = [str(record["comparison_id"]) for record in comparisons[:3]]
     return HealthResult(url, True, f"library has {payload.get('comparison_count')} comparisons"), comparison_ids
+
+
+def validate_status_json(url: str, text: str) -> HealthResult:
+    payload = json.loads(text)
+    if payload.get("schema") != "the-real-difference-engine.status.v1":
+        return HealthResult(url, False, "unexpected status schema")
+    if not isinstance(payload.get("comparison_count"), int) or payload["comparison_count"] <= 0:
+        return HealthResult(url, False, "status has invalid comparison count")
+    endpoints = payload.get("endpoints")
+    if not isinstance(endpoints, dict) or endpoints.get("status") != "status.json":
+        return HealthResult(url, False, "status endpoint map is incomplete")
+    roadmap = payload.get("roadmap")
+    if not isinstance(roadmap, dict) or not roadmap.get("status_counts"):
+        return HealthResult(url, False, "status roadmap summary is incomplete")
+    return HealthResult(url, True, "status json ok")
 
 
 def validate_feed(url: str, text: str) -> HealthResult:
@@ -195,6 +211,8 @@ def validate_url(url: str, text: str) -> HealthResult:
     if url.endswith("/library.json"):
         result, _ = validate_library_json(url, text)
         return result
+    if url.endswith("/status.json"):
+        return validate_status_json(url, text)
     if url.endswith("/changelog.html"):
         return validate_changelog_html(url, text)
     if url.endswith("/changelog.md"):

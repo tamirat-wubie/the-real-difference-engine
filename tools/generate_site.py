@@ -29,6 +29,7 @@ DEFAULT_SITE_DESCRIPTION = (
 CHANGELOG_DESCRIPTION = "Recent public platform updates from the repository history."
 ROADMAP_DESCRIPTION = "Public platform roadmap with shipped, planned, and candidate work."
 ROADMAP_REQUIRED_ITEM_FIELDS = {"phase", "status", "title", "outcome", "proof"}
+STATUS_SCHEMA = "the-real-difference-engine.status.v1"
 
 
 def issue_url(template: str, labels: list[str] | None = None) -> str:
@@ -299,9 +300,59 @@ def build_library_index(
     }
 
 
+def count_roadmap_statuses(roadmap: dict[str, object]) -> dict[str, int]:
+    counts: dict[str, int] = {}
+    for item in roadmap_items(roadmap):
+        status = str(item["status"])
+        counts[status] = counts.get(status, 0) + 1
+    return dict(sorted(counts.items()))
+
+
+def build_status_payload(
+    comparisons: list[dict[str, object]],
+    roadmap: dict[str, object],
+    signal_decisions: list[ExpansionDecision] | None = None,
+    commits: list[dict[str, str]] | None = None,
+) -> dict[str, object]:
+    decisions = signal_decisions or []
+    recent_commits = commits or []
+    expand_count = sum(1 for decision in decisions if decision.decision == "expand")
+    latest_commit = recent_commits[0] if recent_commits else None
+    return {
+        "schema": STATUS_SCHEMA,
+        "site_url": absolute_site_url(),
+        "repository_url": REPOSITORY_URL,
+        "comparison_count": len(comparisons),
+        "roadmap": {
+            "updated": roadmap.get("updated", "unknown"),
+            "item_count": len(roadmap_items(roadmap)),
+            "status_counts": count_roadmap_statuses(roadmap),
+            "url": "roadmap.html",
+            "markdown_url": "roadmap.md",
+        },
+        "audience_signal": {
+            "decision_count": len(decisions),
+            "expand_count": expand_count,
+        },
+        "release_trace": {
+            "latest_commit": latest_commit,
+            "changelog_url": "changelog.html",
+            "changelog_markdown_url": "changelog.md",
+        },
+        "endpoints": {
+            "library": "library.json",
+            "feed": "feed.xml",
+            "sitemap": "sitemap.xml",
+            "robots": "robots.txt",
+            "status": "status.json",
+        },
+    }
+
+
 def build_sitemap_urls(comparisons: list[dict[str, object]]) -> list[str]:
     urls = [
         absolute_site_url(),
+        absolute_site_url("status.json"),
         absolute_site_url("changelog.html"),
         absolute_site_url("changelog.md"),
         absolute_site_url("roadmap.html"),
@@ -1233,6 +1284,27 @@ def write_library_index(
     return path
 
 
+def write_status_file(
+    comparisons: list[dict[str, object]],
+    roadmap: dict[str, object],
+    signal_decisions: list[ExpansionDecision],
+    commits: list[dict[str, str]],
+    output_dir: Path,
+) -> Path:
+    output_dir.mkdir(parents=True, exist_ok=True)
+    path = output_dir / "status.json"
+    path.write_text(
+        json.dumps(
+            build_status_payload(comparisons, roadmap, signal_decisions, commits),
+            ensure_ascii=True,
+            indent=2,
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+    return path
+
+
 def write_changelog_files(commits: list[dict[str, str]], output_dir: Path) -> list[Path]:
     output_dir.mkdir(parents=True, exist_ok=True)
     html_path = output_dir / "changelog.html"
@@ -1299,10 +1371,26 @@ def write_site(
     expansion_paths = write_expansion_pack_files(comparisons, expansion_ready_ids, output_dir)
     export_paths = write_comparison_exports(comparisons, output_dir)
     library_path = write_library_index(comparisons, signal_decisions, output_dir)
-    changelog_paths = write_changelog_files(load_recent_commits(), output_dir)
-    roadmap_paths = write_roadmap_files(roadmap or load_roadmap(DEFAULT_ROADMAP_PATH), output_dir)
+    recent_commits = load_recent_commits()
+    resolved_roadmap = roadmap or load_roadmap(DEFAULT_ROADMAP_PATH)
+    status_path = write_status_file(
+        comparisons,
+        resolved_roadmap,
+        signal_decisions,
+        recent_commits,
+        output_dir,
+    )
+    changelog_paths = write_changelog_files(recent_commits, output_dir)
+    roadmap_paths = write_roadmap_files(resolved_roadmap, output_dir)
     discovery_paths = write_discovery_files(comparisons, output_dir)
-    return expansion_paths + export_paths + [library_path] + changelog_paths + roadmap_paths + discovery_paths
+    return (
+        expansion_paths
+        + export_paths
+        + [library_path, status_path]
+        + changelog_paths
+        + roadmap_paths
+        + discovery_paths
+    )
 
 
 def main() -> int:
