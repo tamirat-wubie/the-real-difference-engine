@@ -30,6 +30,9 @@ CHANGELOG_DESCRIPTION = "Recent public platform updates from the repository hist
 ROADMAP_DESCRIPTION = "Public platform roadmap with shipped, planned, and candidate work."
 ROADMAP_REQUIRED_ITEM_FIELDS = {"phase", "status", "title", "outcome", "proof"}
 STATUS_SCHEMA = "the-real-difference-engine.status.v1"
+API_CONTRACT_DESCRIPTION = (
+    "Public API contract for generated machine-readable and markdown endpoints."
+)
 
 
 def issue_url(template: str, labels: list[str] | None = None) -> str:
@@ -340,6 +343,8 @@ def build_status_payload(
             "changelog_markdown_url": "changelog.md",
         },
         "endpoints": {
+            "api_contract": "api.html",
+            "api_contract_markdown": "api.md",
             "library": "library.json",
             "feed": "feed.xml",
             "sitemap": "sitemap.xml",
@@ -352,6 +357,8 @@ def build_status_payload(
 def build_sitemap_urls(comparisons: list[dict[str, object]]) -> list[str]:
     urls = [
         absolute_site_url(),
+        absolute_site_url("api.html"),
+        absolute_site_url("api.md"),
         absolute_site_url("status.json"),
         absolute_site_url("changelog.html"),
         absolute_site_url("changelog.md"),
@@ -566,6 +573,136 @@ def render_roadmap_html(roadmap: dict[str, object]) -> str:
     )
 
 
+def api_contract_records() -> list[dict[str, str]]:
+    return [
+        {
+            "path": "library.json",
+            "format": "application/json",
+            "schema": "the-real-difference-engine.library.v1",
+            "purpose": "Complete comparison index for integrations.",
+            "contract": "Stable top-level schema, comparison_count, and comparisons records with page_url and markdown_url.",
+        },
+        {
+            "path": "status.json",
+            "format": "application/json",
+            "schema": STATUS_SCHEMA,
+            "purpose": "Public platform state and endpoint discovery.",
+            "contract": "Stable schema, site_url, repository_url, comparison_count, roadmap, audience_signal, release_trace, and endpoints.",
+        },
+        {
+            "path": "roadmap.html",
+            "format": "text/html",
+            "schema": "html",
+            "purpose": "Human-readable platform roadmap.",
+            "contract": "Root-level page with canonical metadata, root stylesheet, and link to roadmap.md.",
+        },
+        {
+            "path": "roadmap.md",
+            "format": "text/markdown",
+            "schema": "markdown",
+            "purpose": "Portable platform roadmap export.",
+            "contract": "Starts with # Roadmap and includes updated marker plus phase, status, outcome, and proof fields.",
+        },
+        {
+            "path": "changelog.html",
+            "format": "text/html",
+            "schema": "html",
+            "purpose": "Human-readable release trace.",
+            "contract": "Root-level page with canonical metadata, root stylesheet, and link to changelog.md.",
+        },
+        {
+            "path": "changelog.md",
+            "format": "text/markdown",
+            "schema": "markdown",
+            "purpose": "Portable release trace export.",
+            "contract": "Starts with # Changelog and lists recent commit hashes and messages when Git history is available.",
+        },
+        {
+            "path": "exports/{comparison_id}.md",
+            "format": "text/markdown",
+            "schema": "markdown",
+            "purpose": "Portable comparison export.",
+            "contract": "Starts with the comparison title and includes Context, Hidden Difference, Conditional Verdict, and Final Line sections.",
+        },
+    ]
+
+
+def render_api_contract_markdown() -> str:
+    lines = [
+        "# API Contract",
+        "",
+        API_CONTRACT_DESCRIPTION,
+        "",
+        "Base URL: https://tamirat-wubie.github.io/the-real-difference-engine/",
+        "",
+    ]
+    for record in api_contract_records():
+        lines.extend(
+            [
+                f"## {record['path']}",
+                "",
+                f"Format: {record['format']}",
+                f"Schema: {record['schema']}",
+                f"Purpose: {record['purpose']}",
+                f"Contract: {record['contract']}",
+                "",
+            ]
+        )
+    return "\n".join(lines)
+
+
+def render_api_contract_html() -> str:
+    rows = "\n".join(
+        f"""
+        <tr>
+          <td><code>{clean_text(record["path"])}</code></td>
+          <td>{clean_text(record["format"])}</td>
+          <td>{clean_text(record["schema"])}</td>
+          <td>{clean_text(record["purpose"])}</td>
+          <td>{clean_text(record["contract"])}</td>
+        </tr>
+        """
+        for record in api_contract_records()
+    )
+
+    return render_page(
+        title="API Contract",
+        description=API_CONTRACT_DESCRIPTION,
+        canonical_path="api.html",
+        body=f"""
+        <nav class="back"><a href="index.html">Back to library</a></nav>
+        <section class="hero">
+          <p class="eyebrow">Public integration contract</p>
+          <h1>API Contract</h1>
+          <p class="lede">{API_CONTRACT_DESCRIPTION}</p>
+          <div class="actions">
+            <a class="button secondary" href="api.md">Download markdown</a>
+            <a class="button secondary" href="status.json">View status JSON</a>
+            <a class="button secondary" href="library.json">View library JSON</a>
+          </div>
+        </section>
+        <section>
+          <div class="table-scroll">
+            <table>
+              <thead>
+                <tr>
+                  <th>Path</th>
+                  <th>Format</th>
+                  <th>Schema</th>
+                  <th>Purpose</th>
+                  <th>Contract</th>
+                </tr>
+              </thead>
+              <tbody>
+                {rows}
+              </tbody>
+            </table>
+          </div>
+        </section>
+        """,
+    )
+
+
 def render_expansion_queue(
     comparisons: list[dict[str, object]],
     expansion_ready_ids: set[str],
@@ -691,6 +828,7 @@ def render_home(
           <div class="actions">
             <a class="button" href="{issue_url("comparison_request.yml", ["comparison-request"])}">Request a comparison</a>
             <a class="button secondary" href="{issue_url("audience_signal.yml", ["audience-signal"])}">Submit audience signal</a>
+            <a class="button secondary" href="api.html">API contract</a>
             <a class="button secondary" href="roadmap.html">View roadmap</a>
             <a class="button secondary" href="changelog.html">View changelog</a>
           </div>
@@ -1305,6 +1443,15 @@ def write_status_file(
     return path
 
 
+def write_api_contract_files(output_dir: Path) -> list[Path]:
+    output_dir.mkdir(parents=True, exist_ok=True)
+    html_path = output_dir / "api.html"
+    markdown_path = output_dir / "api.md"
+    html_path.write_text(render_api_contract_html(), encoding="utf-8")
+    markdown_path.write_text(render_api_contract_markdown(), encoding="utf-8")
+    return [html_path, markdown_path]
+
+
 def write_changelog_files(commits: list[dict[str, str]], output_dir: Path) -> list[Path]:
     output_dir.mkdir(parents=True, exist_ok=True)
     html_path = output_dir / "changelog.html"
@@ -1380,6 +1527,7 @@ def write_site(
         recent_commits,
         output_dir,
     )
+    api_contract_paths = write_api_contract_files(output_dir)
     changelog_paths = write_changelog_files(recent_commits, output_dir)
     roadmap_paths = write_roadmap_files(resolved_roadmap, output_dir)
     discovery_paths = write_discovery_files(comparisons, output_dir)
@@ -1387,6 +1535,7 @@ def write_site(
         expansion_paths
         + export_paths
         + [library_path, status_path]
+        + api_contract_paths
         + changelog_paths
         + roadmap_paths
         + discovery_paths

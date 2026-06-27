@@ -28,11 +28,14 @@ from expansion_pack import (  # noqa: E402
 )
 from final_line_builder import rank_final_lines  # noqa: E402
 from generate_site import (  # noqa: E402
+    api_contract_records,
     build_library_index,
     build_status_payload,
     comparison_json_ld,
     home_json_ld,
     load_roadmap,
+    render_api_contract_html,
+    render_api_contract_markdown,
     render_changelog_html,
     render_changelog_markdown,
     render_comparison,
@@ -46,6 +49,7 @@ from generate_site import (  # noqa: E402
     render_sitemap,
 )
 from generate_site import (  # noqa: E402
+    write_api_contract_files,
     write_changelog_files,
     write_comparison_exports,
     write_discovery_files,
@@ -75,6 +79,8 @@ from script_generator import generate_short_script  # noqa: E402
 from site_health import (  # noqa: E402
     join_url,
     planned_urls,
+    validate_api_contract_html,
+    validate_api_contract_markdown,
     validate_changelog_html,
     validate_changelog_markdown,
     render_results,
@@ -252,6 +258,7 @@ class SiteGeneratorTests(unittest.TestCase):
         self.assertIn('id="lens-filter"', html)
         self.assertIn('data-lens="Decision quality"', html)
         self.assertIn('data-search="alpha vs beta alpha beta decision quality', html)
+        self.assertIn('href="api.html"', html)
         self.assertIn('href="roadmap.html"', html)
         self.assertIn('href="changelog.html"', html)
         self.assertIn("applyComparisonFilters", html)
@@ -407,6 +414,33 @@ class SiteGeneratorTests(unittest.TestCase):
             if output_dir.exists():
                 shutil.rmtree(output_dir)
 
+    def test_render_api_contract_documents_public_endpoints(self) -> None:
+        records = api_contract_records()
+        markdown = render_api_contract_markdown()
+        html = render_api_contract_html()
+
+        self.assertGreaterEqual(len(records), 5)
+        self.assertIn("# API Contract", markdown)
+        self.assertIn("## library.json", markdown)
+        self.assertIn("## status.json", markdown)
+        self.assertIn("## exports/{comparison_id}.md", markdown)
+        self.assertIn("<h1>API Contract</h1>", html)
+        self.assertIn("Public integration contract", html)
+        self.assertIn('href="assets/styles.css"', html)
+
+    def test_write_api_contract_files_writes_public_assets(self) -> None:
+        output_dir = ROOT / "site_api_contract_test_output"
+        try:
+            written_paths = write_api_contract_files(output_dir)
+
+            self.assertEqual(len(written_paths), 2)
+            self.assertTrue((output_dir / "api.html").exists())
+            self.assertTrue((output_dir / "api.md").exists())
+            self.assertIn("# API Contract", (output_dir / "api.md").read_text(encoding="utf-8"))
+        finally:
+            if output_dir.exists():
+                shutil.rmtree(output_dir)
+
     def test_write_expansion_pack_files_writes_pack_assets(self) -> None:
         output_dir = ROOT / "site_test_output"
         try:
@@ -463,6 +497,7 @@ class SiteGeneratorTests(unittest.TestCase):
         self.assertEqual(payload["comparison_count"], 1)
         self.assertEqual(payload["roadmap"]["status_counts"]["shipped"], 1)
         self.assertEqual(payload["release_trace"]["latest_commit"]["hash"], "abc1234")
+        self.assertEqual(payload["endpoints"]["api_contract"], "api.html")
         self.assertEqual(payload["endpoints"]["status"], "status.json")
 
     def test_write_status_file_writes_machine_readable_status(self) -> None:
@@ -501,6 +536,8 @@ class SiteGeneratorTests(unittest.TestCase):
         sitemap = render_sitemap([VALID_COMPARISON])
 
         self.assertIn("https://tamirat-wubie.github.io/the-real-difference-engine/", sitemap)
+        self.assertIn("api.html", sitemap)
+        self.assertIn("api.md", sitemap)
         self.assertIn("status.json", sitemap)
         self.assertIn("library.json", sitemap)
         self.assertIn("feed.xml", sitemap)
@@ -593,6 +630,8 @@ class SiteHealthTests(unittest.TestCase):
         urls = planned_urls("https://example.com/base/", ["one", "two", "three", "four"])
 
         self.assertIn("https://example.com/base/library.json", urls)
+        self.assertIn("https://example.com/base/api.html", urls)
+        self.assertIn("https://example.com/base/api.md", urls)
         self.assertIn("https://example.com/base/status.json", urls)
         self.assertIn("https://example.com/base/changelog.html", urls)
         self.assertIn("https://example.com/base/changelog.md", urls)
@@ -626,6 +665,8 @@ class SiteHealthTests(unittest.TestCase):
         self.assertTrue(validate_feed("https://example.com/feed.xml", render_feed([VALID_COMPARISON])).ok)
         self.assertTrue(validate_sitemap("https://example.com/sitemap.xml", render_sitemap([VALID_COMPARISON])).ok)
         self.assertTrue(validate_robots("https://example.com/robots.txt", render_robots()).ok)
+        self.assertTrue(validate_api_contract_html("https://example.com/api.html", render_api_contract_html()).ok)
+        self.assertTrue(validate_api_contract_markdown("https://example.com/api.md", render_api_contract_markdown()).ok)
         self.assertTrue(
             validate_status_json(
                 "https://example.com/status.json",

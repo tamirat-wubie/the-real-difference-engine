@@ -44,6 +44,8 @@ Output goes to:
 ```text
 site/
   index.html
+  api.html
+  api.md
   changelog.html
   changelog.md
   roadmap.html
@@ -75,6 +77,8 @@ The generator also publishes a root changelog page and markdown export from rece
 The generator also publishes a root roadmap page and markdown export from `data/platform_roadmap.json`.
 
 The generator also publishes `site/status.json` for integrations that need comparison count, roadmap status, release trace, and endpoint references without scraping HTML.
+
+The generator also publishes `site/api.html` and `site/api.md` as the public contract for `library.json`, `status.json`, roadmap, changelog, and comparison markdown exports.
 
 Machine-readable integrations can read `site/library.json` for comparison metadata, page URLs, markdown export URLs, and signal decision state when signal rows exist.
 

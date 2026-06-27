@@ -57,6 +57,8 @@ def join_url(base_url: str, path: str = "") -> str:
 def planned_urls(base_url: str, comparison_ids: list[str]) -> list[str]:
     urls = [
         join_url(base_url),
+        join_url(base_url, "api.html"),
+        join_url(base_url, "api.md"),
         join_url(base_url, "status.json"),
         join_url(base_url, "changelog.html"),
         join_url(base_url, "changelog.md"),
@@ -124,6 +126,8 @@ def validate_status_json(url: str, text: str) -> HealthResult:
     endpoints = payload.get("endpoints")
     if not isinstance(endpoints, dict) or endpoints.get("status") != "status.json":
         return HealthResult(url, False, "status endpoint map is incomplete")
+    if endpoints.get("api_contract") != "api.html" or endpoints.get("api_contract_markdown") != "api.md":
+        return HealthResult(url, False, "status API contract references are incomplete")
     roadmap = payload.get("roadmap")
     if not isinstance(roadmap, dict) or not roadmap.get("status_counts"):
         return HealthResult(url, False, "status roadmap summary is incomplete")
@@ -134,6 +138,34 @@ def validate_feed(url: str, text: str) -> HealthResult:
     if '<rss version="2.0">' not in text or "<item>" not in text:
         return HealthResult(url, False, "feed is missing RSS items")
     return HealthResult(url, True, "feed ok")
+
+
+def validate_api_contract_html(url: str, html: str) -> HealthResult:
+    required_fragments = [
+        "<h1>API Contract</h1>",
+        "Public integration contract",
+        "library.json",
+        "status.json",
+        'href="api.md"',
+        'href="assets/styles.css"',
+    ]
+    missing = [fragment for fragment in required_fragments if fragment not in html]
+    if missing:
+        return HealthResult(url, False, f"API contract html missing: {', '.join(missing)}")
+    return HealthResult(url, True, "API contract html ok")
+
+
+def validate_api_contract_markdown(url: str, text: str) -> HealthResult:
+    required_fragments = [
+        "# API Contract",
+        "## library.json",
+        "## status.json",
+        "## exports/{comparison_id}.md",
+    ]
+    missing = [fragment for fragment in required_fragments if fragment not in text]
+    if missing:
+        return HealthResult(url, False, f"API contract markdown missing: {', '.join(missing)}")
+    return HealthResult(url, True, "API contract markdown ok")
 
 
 def validate_sitemap(url: str, text: str) -> HealthResult:
@@ -211,6 +243,10 @@ def validate_url(url: str, text: str) -> HealthResult:
     if url.endswith("/library.json"):
         result, _ = validate_library_json(url, text)
         return result
+    if url.endswith("/api.html"):
+        return validate_api_contract_html(url, text)
+    if url.endswith("/api.md"):
+        return validate_api_contract_markdown(url, text)
     if url.endswith("/status.json"):
         return validate_status_json(url, text)
     if url.endswith("/changelog.html"):
